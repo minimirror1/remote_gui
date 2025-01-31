@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment - 제외
+venv/
+env/
+ENV/
+.env
+.venv
+Python_*_venv/
+
+# 대신 이런 파일들은 포함시켜야 합니다
+# requirements.txt
+# pyproject.toml
+# poetry.lock
+# setup.py
+
+# Qt/PySide
+*.qmlc
+*.jsc
+*.qm
+.qtcreator/
+*.user
+*.autosave
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.moc
+.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+.vs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build & Dist
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+
+# Local configuration
+config.local.ini
+settings.local.json
+.env.local
+
+# Logs
+*.log
+logs/
