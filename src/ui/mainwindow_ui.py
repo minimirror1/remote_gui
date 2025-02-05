@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QMainWindow,
-    QPushButton, QSizePolicy, QSpacerItem, QStatusBar,
-    QVBoxLayout, QWidget)
+    QPushButton, QSizePolicy, QSpacerItem, QStackedWidget,
+    QStatusBar, QVBoxLayout, QWidget)
 import _icons_rc
 
 class Ui_MainWindow(object):
@@ -49,6 +49,9 @@ class Ui_MainWindow(object):
         self.menuButton.setObjectName(u"menuButton")
         self.menuButton.setMinimumSize(QSize(50, 0))
         self.menuButton.setMaximumSize(QSize(50, 16777215))
+        icon = QIcon()
+        icon.addFile(u":/feather/icons/feather/align-justify.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.menuButton.setIcon(icon)
 
         self.horizontalLayout_2.addWidget(self.menuButton)
 
@@ -104,15 +107,6 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.leftMenuSubContainer)
 
-        self.centerMenuContainer = QWidget(self.centralwidget)
-        self.centerMenuContainer.setObjectName(u"centerMenuContainer")
-        self.centerMenuContainer.setMinimumSize(QSize(200, 0))
-        self.centerMenuContainer.setMaximumSize(QSize(200, 16777215))
-        self.verticalLayout_5 = QVBoxLayout(self.centerMenuContainer)
-        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
-
-        self.horizontalLayout.addWidget(self.centerMenuContainer)
-
         self.mainBodyContainer = QWidget(self.centralwidget)
         self.mainBodyContainer.setObjectName(u"mainBodyContainer")
         self.verticalLayout_3 = QVBoxLayout(self.mainBodyContainer)
@@ -133,30 +127,32 @@ class Ui_MainWindow(object):
 
         self.windowBtnFrame = QFrame(self.headerContainer)
         self.windowBtnFrame.setObjectName(u"windowBtnFrame")
+        self.windowBtnFrame.setMaximumSize(QSize(100, 16777215))
+        self.windowBtnFrame.setStyleSheet(u"")
         self.horizontalLayout_5 = QHBoxLayout(self.windowBtnFrame)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setContentsMargins(0, 0, 0, 0)
         self.minimizeBtn = QPushButton(self.windowBtnFrame)
         self.minimizeBtn.setObjectName(u"minimizeBtn")
-        icon = QIcon()
-        icon.addFile(u":/feather/icons/feather/window_minimize.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.minimizeBtn.setIcon(icon)
+        icon1 = QIcon()
+        icon1.addFile(u":/feather/icons/feather/window_minimize.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.minimizeBtn.setIcon(icon1)
 
         self.horizontalLayout_5.addWidget(self.minimizeBtn)
 
         self.restoreBtn = QPushButton(self.windowBtnFrame)
         self.restoreBtn.setObjectName(u"restoreBtn")
-        icon1 = QIcon()
-        icon1.addFile(u":/feather/icons/feather/window_undock.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.restoreBtn.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/feather/icons/feather/window_undock.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.restoreBtn.setIcon(icon2)
 
         self.horizontalLayout_5.addWidget(self.restoreBtn)
 
         self.closeBtn = QPushButton(self.windowBtnFrame)
         self.closeBtn.setObjectName(u"closeBtn")
-        icon2 = QIcon()
-        icon2.addFile(u":/feather/icons/feather/x.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        self.closeBtn.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/feather/icons/feather/x.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.closeBtn.setIcon(icon3)
 
         self.horizontalLayout_5.addWidget(self.closeBtn)
 
@@ -166,19 +162,41 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.headerContainer)
 
-        self.homePage = QFrame(self.mainBodyContainer)
-        self.homePage.setObjectName(u"homePage")
-        self.homePage.setMinimumSize(QSize(0, 0))
-        self.homePage.setFrameShape(QFrame.Shape.StyledPanel)
-        self.horizontalLayout_4 = QHBoxLayout(self.homePage)
-        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
-        self.pushButton = QPushButton(self.homePage)
+        self.frame = QFrame(self.mainBodyContainer)
+        self.frame.setObjectName(u"frame")
+        self.frame.setMinimumSize(QSize(0, 50))
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_7 = QHBoxLayout(self.frame)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.horizontalLayout_7.setContentsMargins(2, 2, 2, 2)
+        self.mainPage = QStackedWidget(self.frame)
+        self.mainPage.setObjectName(u"mainPage")
+        self.mainPage.setMinimumSize(QSize(0, 0))
+        self.mainPage.setFrameShape(QFrame.Shape.StyledPanel)
+        self.JogPage = QWidget()
+        self.JogPage.setObjectName(u"JogPage")
+        self.pushButton_3 = QPushButton(self.JogPage)
+        self.pushButton_3.setObjectName(u"pushButton_3")
+        self.pushButton_3.setGeometry(QRect(310, 160, 75, 24))
+        self.mainPage.addWidget(self.JogPage)
+        self.PlayPage = QWidget()
+        self.PlayPage.setObjectName(u"PlayPage")
+        self.pushButton_2 = QPushButton(self.PlayPage)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setGeometry(QRect(300, 150, 75, 24))
+        self.mainPage.addWidget(self.PlayPage)
+        self.HomePage = QWidget()
+        self.HomePage.setObjectName(u"HomePage")
+        self.pushButton = QPushButton(self.HomePage)
         self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setGeometry(QRect(310, 150, 75, 24))
+        self.mainPage.addWidget(self.HomePage)
 
-        self.horizontalLayout_4.addWidget(self.pushButton)
+        self.horizontalLayout_7.addWidget(self.mainPage)
 
 
-        self.verticalLayout_3.addWidget(self.homePage)
+        self.verticalLayout_3.addWidget(self.frame)
 
 
         self.horizontalLayout.addWidget(self.mainBodyContainer)
@@ -190,12 +208,15 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
+        self.mainPage.setCurrentIndex(0)
+
+
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-        self.menuButton.setText(QCoreApplication.translate("MainWindow", u"menu", None))
+        self.menuButton.setText("")
         self.HomeButton.setText(QCoreApplication.translate("MainWindow", u"Home", None))
         self.PlayButton.setText(QCoreApplication.translate("MainWindow", u"Play", None))
         self.jogButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
@@ -204,6 +225,8 @@ class Ui_MainWindow(object):
         self.minimizeBtn.setText("")
         self.restoreBtn.setText("")
         self.closeBtn.setText("")
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"PushButton", None))
+        self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"3", None))
+        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"2", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"1", None))
     # retranslateUi
 

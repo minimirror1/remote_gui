@@ -24,8 +24,8 @@ def main():
         app = QApplication(sys.argv)
 
         # 다크 스타일 시트 설정
-        dark_stylesheet = qdarkstyle.load_stylesheet_pyqt6()
-        app.setStyleSheet(dark_stylesheet)
+        light_stylesheet = qdarkstyle.load_stylesheet(palette=qdarkstyle.LightPalette)
+        app.setStyleSheet(light_stylesheet)
         
 
         # 메인 윈도우 생성 및 표시
