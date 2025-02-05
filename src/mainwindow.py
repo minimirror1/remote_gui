@@ -2,7 +2,9 @@
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
-
+import _icons_rc  # 수정된 import 경로
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QSize
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -21,6 +23,7 @@ class MainWindow(QMainWindow):
         """
         # 예시: pushButton 클릭 시 on_pushButton_clicked 메서드 호출
         # self.ui.pushButton.clicked.connect(self.on_pushButton_clicked)
+
         pass
 
     def on_pushButton_clicked(self):
