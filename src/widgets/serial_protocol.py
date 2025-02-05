@@ -1,0 +1,333 @@
+import enum
+import struct
+import time
+
+
+class FileTransferStage(enum.Enum):
+    REQUEST_RECEIVE = 1    # 파일 수신 요청
+    READY_TO_RECEIVE = 2   # 수신 준비 완료
+    RECEIVING_DATA = 3     # 데이터 수신 중
+    VERIFY_CHECKSUM = 4    # 체크섬 검증
+
+
+class ComProtocol:
+    # 명령어 및 상수 정의
+    CMD_ACK_BIT = 0x8000
+    CMD_PING = 0x0001
+    CMD_PONG = CMD_PING | CMD_ACK_BIT  # PONG 응답용
+    CMD_FILE_RECEIVE = 0x0002         # 파일 수신 요청
+    CMD_FILE_RECEIVE_ACK = CMD_FILE_RECEIVE | CMD_ACK_BIT
+    CMD_CONFIG = 0x0003
+
+    MAX_RETRY_COUNT = 5
+    MAX_FILENAME_LENGTH = 256
+    MAX_FILE_SIZE = 1024 * 1024  # 1MB
+
+    START_MARKER = 0x16
+    START_SEQUENCE_LENGTH = 4
+    PACKET_TIMEOUT_MS = 100
+
+    CRC16_INIT = 0xFFFF
+    CRC16_POLY = 0x1021  # CCITT 다항식
+
+    class ReceiveState(enum.Enum):
+        WAIT_START = 0
+        READ_LENGTH = 1
+        READ_RECEIVER_ID = 2
+        READ_SENDER_ID = 3
+        READ_CMD = 4
+        READ_PAYLOAD = 5
+        # VERIFY_CRC 단계 등 필요에 따라 추가
+
+    class FileTransferContext:
+        def __init__(self):
+            self.filename = ""           # 최대 MAX_FILENAME_LENGTH 문자
+            self.fileSize = 0
+            self.bufferSize = 0
+            self.currentIndex = 0
+            self.retryCount = 0
+            self.isTransferring = False
+            self.isSender = False
+            self.receivedSize = 0
+            self.checksum = 0
+
+    def __init__(self, serial, tick):
+        """
+        :param serial: 시리얼 입출력을 위한 인터페이스 (write, read 메소드 등 구현되어 있어야 함)
+        :param tick: 타이머 혹은 시간 관련 인터페이스 (필요 시 구현)
+        """
+        self.serial = serial
+        self.tick = tick
+
+        self.currentState = ComProtocol.ReceiveState.WAIT_START
+        self.lastReceiveTime = 0
+        self.expectedLength = 0
+        self.receiverId = 0
+        self.senderId = 0
+        self.payloadIndex = 0
+        self.startSequenceCount = 0
+
+        self.receiveBuffer = bytearray()  # 수신된 데이터 저장용 버퍼
+
+        self.receivedCRC = 0
+        self.calculatedCRC = 0
+        self.cmd = 0
+
+        self.fileContext = ComProtocol.FileTransferContext()
+
+    def sendData(self, receiverId, senderId, cmd, data):
+        """
+        데이터를 패킷으로 구성하여 시리얼 인터페이스로 전송한다.
+        :param receiverId: 수신자 ID (uint16)
+        :param senderId: 송신자 ID (uint16)
+        :param cmd: 명령어 (uint16)
+        :param data: payload (bytes-like object)
+        """
+        packet = bytearray()
+
+        # 시작 마커 시퀀스 추가
+        for _ in range(ComProtocol.START_SEQUENCE_LENGTH):
+            packet.append(ComProtocol.START_MARKER)
+
+        # 패킷 구성: [길이(2바이트), receiverId(2바이트), senderId(2바이트), cmd(2바이트), payload, CRC(2바이트)]
+        # length는 (2 + 2 + 2 + len(data) + 2)
+        length = 2 + 2 + 2 + len(data) + 2
+        packet.extend(struct.pack('>H', length))
+        packet.extend(struct.pack('>H', receiverId))
+        packet.extend(struct.pack('>H', senderId))
+        packet.extend(struct.pack('>H', cmd))
+        packet.extend(data)
+
+        # CRC 계산 (시작 마커 이후부터 CRC 앞까지)
+        crc = self.calculateCRC16(packet[ComProtocol.START_SEQUENCE_LENGTH:], 
+                                  len(packet) - ComProtocol.START_SEQUENCE_LENGTH)
+        packet.extend(struct.pack('>H', crc))
+
+        # 시리얼 인터페이스로 전송 (serial 인터페이스는 write(bytes) 메소드를 제공해야 함)
+        self.serial.write(packet)
+
+    def receiveData(self, data):
+        """
+        시리얼 인터페이스에서 읽어온 데이터를 내부 버퍼에 추가한다.
+        :param data: bytes-like object
+        """
+        self.receiveBuffer.extend(data)
+
+    def isDataAvailable(self):
+        """
+        수신 버퍼에 데이터가 있는지 여부 반환.
+        """
+        return len(self.receiveBuffer) > 0
+
+    def processReceivedData(self):
+        """
+        내부 버퍼에 쌓인 데이터를 상태 머신에 따라 하나 이상의 패킷 단위로 처리한다.
+        실제 구현에서는 부분적으로 수신된 패킷 처리 등 보다 정교한 로직이 필요함.
+        """
+        # 충분한 데이터가 있을 때까지 반복 처리
+        while len(self.receiveBuffer) >= (ComProtocol.START_SEQUENCE_LENGTH + 2):
+            # 시작 마커 확인
+            expected_start = bytes([ComProtocol.START_MARKER]) * ComProtocol.START_SEQUENCE_LENGTH
+            if self.receiveBuffer[:ComProtocol.START_SEQUENCE_LENGTH] != expected_start:
+                # 시작 마커가 아닌 경우 한 바이트씩 제거하며 동기화
+                self.receiveBuffer.pop(0)
+                continue
+
+            # 시작 마커 다음 2바이트에서 길이 필드를 확인
+            if len(self.receiveBuffer) < ComProtocol.START_SEQUENCE_LENGTH + 2:
+                break  # 아직 길이 정보가 완전히 수신되지 않음
+
+            length_bytes = self.receiveBuffer[ComProtocol.START_SEQUENCE_LENGTH:
+                                              ComProtocol.START_SEQUENCE_LENGTH + 2]
+            packet_length = struct.unpack('>H', length_bytes)[0]
+            total_packet_length = ComProtocol.START_SEQUENCE_LENGTH + packet_length
+
+            if len(self.receiveBuffer) < total_packet_length:
+                break  # 전체 패킷 수신 전
+
+            # 패킷 추출
+            packet = self.receiveBuffer[:total_packet_length]
+            del self.receiveBuffer[:total_packet_length]
+
+            # 패킷 파싱
+            offset = ComProtocol.START_SEQUENCE_LENGTH + 2  # 시작 마커와 길이 필드 건너뜀
+            receiverId = struct.unpack('>H', packet[offset:offset + 2])[0]
+            offset += 2
+            senderId = struct.unpack('>H', packet[offset:offset + 2])[0]
+            offset += 2
+            cmd = struct.unpack('>H', packet[offset:offset + 2])[0]
+            offset += 2
+            # payload 길이 = 전체 패킷 길이 - (receiverId(2) + senderId(2) + cmd(2) + CRC(2))
+            payload_length = packet_length - 8
+            payload = packet[offset:offset + payload_length]
+            offset += payload_length
+            received_crc = struct.unpack('>H', packet[offset:offset + 2])[0]
+
+            # CRC 검증 (길이, receiverId, senderId, cmd, payload에 대해 계산)
+            crc_data = packet[ComProtocol.START_SEQUENCE_LENGTH + 2:-2]
+            calculated_crc = self.calculateCRC16(crc_data, len(crc_data))
+            if calculated_crc != received_crc:
+                # CRC 에러 처리 (여기서는 그냥 무시)
+                continue
+
+            # 명령 처리
+            self.processCommand(senderId, receiverId, cmd, payload, payload_length)
+
+    def sendPing(self, targetId):
+        """
+        대상에게 ping 요청을 보낸다.
+        """
+        self.sendData(targetId, 0, ComProtocol.CMD_PING, b'')
+
+    # --- 사용자가 필요에 따라 재정의할 수 있는 핸들러들 ---
+    def handlePing(self, senderId, payload):
+        """
+        ping 요청에 대한 기본 처리 (기본값: PONG 응답 전송).
+        """
+        self.sendData(senderId, 0, ComProtocol.CMD_PONG, payload)
+
+    def handleData(self, senderId, payload):
+        """
+        데이터 패킷 수신에 대한 처리 (필요시 재정의).
+        """
+        pass
+
+    def handleConfig(self, senderId, payload):
+        """
+        설정 관련 패킷 수신에 대한 처리 (필요시 재정의).
+        """
+        pass
+
+    def handleUnknownCommand(self, cmd):
+        """
+        알 수 없는 명령을 수신한 경우의 처리 (필요시 재정의).
+        """
+        pass
+
+    def handleFileReceive(self, senderId, payload):
+        """
+        파일 전송 요청 패킷에 대한 처리 (필요시 재정의).
+        """
+        pass
+
+    # --------------------------------------------------
+
+    def calculateCRC16(self, data, length):
+        """
+        주어진 데이터에 대해 CRC16-CCITT (폴리노미얼 0x1021) 계산.
+        :param data: bytes-like object
+        :param length: 계산할 데이터 길이
+        :return: 16비트 CRC 값 (정수)
+        """
+        crc = ComProtocol.CRC16_INIT
+        for byte in data[:length]:
+            crc ^= (byte << 8)
+            for _ in range(8):
+                if crc & 0x8000:
+                    crc = ((crc << 1) ^ ComProtocol.CRC16_POLY) & 0xFFFF
+                else:
+                    crc = (crc << 1) & 0xFFFF
+        return crc
+
+    def processCommand(self, senderId, receiverId, cmd, payload, payloadLength):
+        """
+        수신한 패킷의 명령어(cmd)에 따라 적절한 핸들러로 전달한다.
+        """
+        if cmd == ComProtocol.CMD_PING:
+            self.handlePing(senderId, payload)
+        elif cmd == ComProtocol.CMD_FILE_RECEIVE:
+            self.handleFileReceive(senderId, payload)
+        elif cmd == ComProtocol.CMD_CONFIG:
+            self.handleConfig(senderId, payload)
+        else:
+            self.handleUnknownCommand(cmd)
+
+    def resetFileTransferContext(self):
+        """
+        파일 전송 관련 내부 상태를 초기화한다.
+        """
+        self.fileContext = ComProtocol.FileTransferContext()
+
+    def processFileTransfer(self, stage: FileTransferStage, payload):
+        """
+        파일 전송 프로세스를 단계별로 처리한다.
+        실제 파일 전송 로직은 필요에 따라 구현해야 한다.
+        :param stage: FileTransferStage 열거형 값
+        :param payload: 해당 단계의 payload (bytes-like object)
+        """
+        # 예시) 각 단계에 따라 다르게 처리
+        if stage == FileTransferStage.REQUEST_RECEIVE:
+            # 파일 수신 요청 처리
+            pass
+        elif stage == FileTransferStage.READY_TO_RECEIVE:
+            # 수신 준비 완료 처리
+            pass
+        elif stage == FileTransferStage.RECEIVING_DATA:
+            # 데이터 수신 중 처리
+            pass
+        elif stage == FileTransferStage.VERIFY_CHECKSUM:
+            # 체크섬 검증 처리
+            pass
+
+    def sendFileAck(self, receiverId, stage: FileTransferStage, success, data=0):
+        """
+        파일 전송 관련 응답(ACK) 패킷 전송.
+        :param receiverId: 응답을 받을 대상 ID
+        :param stage: FileTransferStage 단계
+        :param success: 성공 여부 (bool)
+        :param data: 추가 데이터 (예: 전송한 데이터 크기 등)
+        """
+        payload = bytearray()
+        # payload 구성: [stage (1바이트), success (1바이트), data (4바이트)]
+        payload.append(stage.value)
+        payload.append(1 if success else 0)
+        payload.extend(struct.pack('>I', data))
+        self.sendData(receiverId, 0, ComProtocol.CMD_FILE_RECEIVE_ACK, payload)
+
+    def calculateFileChecksum(self, data):
+        """
+        파일 데이터에 대한 체크섬 계산 (여기서는 간단히 바이트 합산).
+        실제 사용 환경에 맞게 다른 알고리즘(CRC 등)으로 변경 가능.
+        :param data: bytes-like object
+        :return: 16비트 체크섬 (정수)
+        """
+        return sum(data) & 0xFFFF
+
+    def sendFileReceiveAck(self, receiverId, stage: FileTransferStage, success, data=0):
+        """
+        파일 수신 응답 전송 함수 (sendFileAck와 동일하게 동작).
+        """
+        self.sendFileAck(receiverId, stage, success, data)
+
+"""
+# ======================================================================
+# 예제: 간단한 시리얼 인터페이스 모의 구현
+class DummySerialInterface:
+    def write(self, data: bytes):
+        print("Sending bytes:", data.hex())
+
+
+class DummyTick:
+    def get_time(self):
+        return time.time()
+
+
+# ======================================================================
+# 사용 예제
+if __name__ == "__main__":
+    serial_iface = DummySerialInterface()
+    tick = DummyTick()
+    protocol = ComProtocol(serial_iface, tick)
+
+    # 예제: ping 전송
+    protocol.sendPing(0x0002)
+
+    # 예제: 수신 데이터(실제 환경에서는 시리얼 포트로부터 읽어온 데이터를 receiveData()로 전달)
+    # 여기서는 임의의 패킷을 구성하여 프로토콜 처리 테스트
+    # 패킷 구성은 sendData()의 구성과 동일하게 만들어야 함
+    test_payload = b'Hello'
+    protocol.sendData(0x0002, 0x0001, ComProtocol.CMD_PING, test_payload)
+    # 전송된 패킷을 임의로 수신 버퍼에 넣고 처리
+    # (실제 환경에서는 serial.read() 등을 통해 데이터를 받아 processReceivedData()를 호출)
+    # 여기서는 예제 목적으로 sendData()에서 출력한 패킷을 그대로 사용
+"""
