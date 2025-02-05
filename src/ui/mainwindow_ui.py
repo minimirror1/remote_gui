@@ -188,9 +188,6 @@ class Ui_MainWindow(object):
         self.mainPage.addWidget(self.PlayPage)
         self.HomePage = QWidget()
         self.HomePage.setObjectName(u"HomePage")
-        self.pushButton = QPushButton(self.HomePage)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(310, 150, 75, 24))
         self.mainPage.addWidget(self.HomePage)
 
         self.horizontalLayout_7.addWidget(self.mainPage)
@@ -208,7 +205,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.mainPage.setCurrentIndex(0)
+        self.mainPage.setCurrentIndex(2)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -227,6 +224,5 @@ class Ui_MainWindow(object):
         self.closeBtn.setText("")
         self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"3", None))
         self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"2", None))
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"1", None))
     # retranslateUi
 

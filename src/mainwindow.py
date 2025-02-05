@@ -3,6 +3,7 @@
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtCore import Qt  # Qt 플래그를 사용하기 위해 추가
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
+from src.ui.home_page_ui import Ui_HomePage  # HomePage UI 클래스 import 추가
 import _icons_rc  # 수정된 import 경로
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize
@@ -38,6 +39,10 @@ class MainWindow(QMainWindow):
         UI 초기화 작업을 수행하는 함수입니다.
         예를 들어, 위젯 속성 설정, 시그널-슬롯 연결 등의 작업을 여기에 추가합니다.
         """
+        # HomePage UI 초기화
+        self.home_page = Ui_HomePage()
+        self.home_page.setupUi(self.ui.mainPage.widget(2))  # index 2에 해당하는 위젯에 HomePage UI 설정
+        
         # 창 제어 버튼 시그널 연결
         if hasattr(self.ui, 'closeBtn'):
             self.ui.closeBtn.clicked.connect(self.close)

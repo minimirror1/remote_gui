@@ -286,7 +286,7 @@
              <enum>QFrame::Shape::StyledPanel</enum>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="JogPage">
              <widget class="QPushButton" name="pushButton_3">
@@ -318,21 +318,7 @@
               </property>
              </widget>
             </widget>
-            <widget class="QWidget" name="HomePage">
-             <widget class="QPushButton" name="pushButton">
-              <property name="geometry">
-               <rect>
-                <x>310</x>
-                <y>150</y>
-                <width>75</width>
-                <height>24</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </widget>
-            </widget>
+            <widget class="QWidget" name="HomePage"/>
            </widget>
           </item>
          </layout>
