@@ -5,6 +5,10 @@ import serial
 
 from src.ui.setting_page_ui import Ui_SettingPage
 
+# 기본 보우레이트 설정
+SERIAL_BAUD_RATE = 921600
+
+
 class SettingPage(QWidget, Ui_SettingPage):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -111,7 +115,7 @@ class SettingPage(QWidget, Ui_SettingPage):
                 selected_port = rb.property("port_device")
                 print(f"선택된 포트: {selected_port}")
                 try:
-                    self.serial_port = serial.Serial(selected_port, 9600, timeout=1)
+                    self.serial_port = serial.Serial(selected_port, SERIAL_BAUD_RATE, timeout=1)
                     print(f"포트 연결 성공: {selected_port}")
                     self.is_connected = True
                     self.selected_port = selected_port
