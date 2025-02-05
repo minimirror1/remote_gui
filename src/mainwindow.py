@@ -2,11 +2,15 @@
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtCore import Qt  # Qt 플래그를 사용하기 위해 추가
+
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
 from src.ui.home_page_ui import Ui_HomePage  # HomePage UI 클래스 import 추가
+from src.setting_page import SettingPage  # SettingPage UI 클래스 import 추가
+
 import _icons_rc  # 수정된 import 경로
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -39,10 +43,14 @@ class MainWindow(QMainWindow):
         UI 초기화 작업을 수행하는 함수입니다.
         예를 들어, 위젯 속성 설정, 시그널-슬롯 연결 등의 작업을 여기에 추가합니다.
         """
-        # HomePage UI 초기화
-        self.home_page = Ui_HomePage()
-        self.home_page.setupUi(self.ui.mainPage.widget(2))  # index 2에 해당하는 위젯에 HomePage UI 설정
+        # HomePage UI 초기화 - addWidget 방식으로 변경
+        #self.home_page = HomePage()
+        #self.ui.mainPage.addWidget(self.home_page)
         
+        # SettingPage UI 초기화
+        self.setting_page = SettingPage()
+        self.ui.mainPage.addWidget(self.setting_page)
+
         # 창 제어 버튼 시그널 연결
         if hasattr(self.ui, 'closeBtn'):
             self.ui.closeBtn.clicked.connect(self.close)
@@ -53,10 +61,11 @@ class MainWindow(QMainWindow):
         if hasattr(self.ui, 'restoreBtn'):
             self.ui.restoreBtn.clicked.connect(self.toggle_maximize_restore)
             
-        # 페이지 전환 버튼 시그널 연결
-        self.ui.HomeButton.clicked.connect(lambda: self.change_page(2))  # HomePage
-        self.ui.PlayButton.clicked.connect(lambda: self.change_page(1))  # PlayPage
+        # 페이지 전환 버튼 시그널 연결        
+        self.ui.HomeButton.clicked.connect(lambda: self.change_page(0))  # HomePage
+        self.ui.PlayButton.clicked.connect(lambda: self.change_page(0))  # PlayPage
         self.ui.jogButton.clicked.connect(lambda: self.change_page(0))   # JogPage
+        self.ui.SettingButton.clicked.connect(lambda: self.change_page(0))  # SettingPage
 
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)

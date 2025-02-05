@@ -174,21 +174,6 @@ class Ui_MainWindow(object):
         self.mainPage.setObjectName(u"mainPage")
         self.mainPage.setMinimumSize(QSize(0, 0))
         self.mainPage.setFrameShape(QFrame.Shape.StyledPanel)
-        self.JogPage = QWidget()
-        self.JogPage.setObjectName(u"JogPage")
-        self.pushButton_3 = QPushButton(self.JogPage)
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(310, 160, 75, 24))
-        self.mainPage.addWidget(self.JogPage)
-        self.PlayPage = QWidget()
-        self.PlayPage.setObjectName(u"PlayPage")
-        self.pushButton_2 = QPushButton(self.PlayPage)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(300, 150, 75, 24))
-        self.mainPage.addWidget(self.PlayPage)
-        self.HomePage = QWidget()
-        self.HomePage.setObjectName(u"HomePage")
-        self.mainPage.addWidget(self.HomePage)
 
         self.horizontalLayout_7.addWidget(self.mainPage)
 
@@ -205,7 +190,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.mainPage.setCurrentIndex(2)
+        self.mainPage.setCurrentIndex(-1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -222,7 +207,5 @@ class Ui_MainWindow(object):
         self.minimizeBtn.setText("")
         self.restoreBtn.setText("")
         self.closeBtn.setText("")
-        self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"3", None))
-        self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"2", None))
     # retranslateUi
 
