@@ -4484,5 +4484,7 @@
     <file>icons/font_awesome\solid/yen-sign.png</file>
     <file>icons/font_awesome\solid/yin-yang.png</file>
     <file>icons/font_awesome\solid/z.png</file>
+    <file>icons/user/Checkbox_Off.png</file>
+    <file>icons/user/Checkbox_On.png</file>
   </qresource>
 </RCC>

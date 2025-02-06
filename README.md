@@ -25,5 +25,5 @@ pip freeze > requirements.txt
 리소스 qrc 변경
 
 ```
-pyside6-rcc _icons.qrc -o src/ui/_icons_rc.py
+pyside6-rcc .\src\resources\icons\_icons.qrc -o _icons_rc.py 
 ```
