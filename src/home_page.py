@@ -20,6 +20,10 @@ class HomePage(QWidget):
         self.led_on = QPixmap(u":/font_awesome_solid/icons/user/status_led_g.png")
         self.led_off = QPixmap(u":/font_awesome_solid/icons/user/status_led_r.png")
         
+        # 시그널 연결 상태 추적
+        self._power_status_connected = False
+        self._current_protocol = None
+        
         # 초기 설정
         self.setup_ui()
         
@@ -52,17 +56,32 @@ class HomePage(QWidget):
         """시리얼 연결 상태가 변경될 때 호출"""
         if is_connected:
             self.connect_protocol_signals()
+        else:
+            self.disconnect_protocol_signals()
+        
+    def disconnect_protocol_signals(self):
+        """프로토콜 시그널 연결 해제"""
+        if self._power_status_connected and self._current_protocol:
+            try:
+                self._current_protocol.main_power_status_changed.disconnect(self.update_power_status)
+            except:
+                pass
+            self._power_status_connected = False
+            self._current_protocol = None
         
     def connect_protocol_signals(self):
         """프로토콜 시그널 연결"""
         protocol = self.serial_commands.serial_manager.get_protocol()
         if protocol:
-            # 기존 연결을 끊고 새로 연결
-            try:
-                protocol.main_power_status_changed.disconnect(self.update_power_status)
-            except:
-                pass
-            protocol.main_power_status_changed.connect(self.update_power_status)
+            # 현재 protocol이 다르다면 이전 연결 해제
+            if self._current_protocol is not protocol:
+                self.disconnect_protocol_signals()
+            
+            # 새로운 연결 설정
+            if not self._power_status_connected:
+                protocol.main_power_status_changed.connect(self.update_power_status)
+                self._power_status_connected = True
+                self._current_protocol = protocol
         
     def on_main_power_clicked(self):
         """메인 전원 버튼 클릭 핸들러"""
