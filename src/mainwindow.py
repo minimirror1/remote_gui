@@ -4,17 +4,23 @@ from PySide6.QtWidgets import QMainWindow, QApplication
 from PySide6.QtCore import Qt  # Qt 플래그를 사용하기 위해 추가
 
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
-from src.ui.home_page_ui import Ui_HomePage  # HomePage UI 클래스 import 추가
+from src.home_page import HomePage  # HomePage UI 클래스 import 추가
 from src.setting_page import SettingPage  # SettingPage UI 클래스 import 추가
 
 import _icons_rc  # 수정된 import 경로
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import QSize
+import logging
+from PySide6.QtCore import QThread
+from src.serial_manager import SerialManager
 
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 로거 설정
+        self.logger = logging.getLogger(__name__)
+        
         # 프레임리스 윈도우 설정
         self.setWindowFlags(Qt.FramelessWindowHint)
         # 윈도우 배경을 투명하게 설정
@@ -24,13 +30,12 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        # 둥근 모서리를 위한 스타일시트 설정
-        # self.ui.centralwidget.setStyleSheet("""
-        #     QWidget#centralwidget {
-        #         background-color: #ffffff;  /* 원하는 배경색으로 변경 가능 */
-        #         border-radius: 10px;  /* 모서리의 둥근 정도 조절 가능 */
-        #     }
-        # """)
+        # SerialManager 인스턴스 가져오기
+        self.serial_manager = SerialManager.get_instance()
+        
+        # 스레드 초기화
+        self.serial_thread = SerialReaderThread()
+        self.serial_thread.start()
 
         # 마우스 드래그를 위한 변수 초기화
         self._drag_pos = None
@@ -44,8 +49,8 @@ class MainWindow(QMainWindow):
         예를 들어, 위젯 속성 설정, 시그널-슬롯 연결 등의 작업을 여기에 추가합니다.
         """
         # HomePage UI 초기화 - addWidget 방식으로 변경
-        #self.home_page = HomePage()
-        #self.ui.mainPage.addWidget(self.home_page)
+        self.home_page = HomePage()
+        self.ui.mainPage.addWidget(self.home_page)
         
         # SettingPage UI 초기화
         self.setting_page = SettingPage()
@@ -65,7 +70,7 @@ class MainWindow(QMainWindow):
         self.ui.HomeButton.clicked.connect(lambda: self.change_page(0))  # HomePage
         self.ui.PlayButton.clicked.connect(lambda: self.change_page(0))  # PlayPage
         self.ui.jogButton.clicked.connect(lambda: self.change_page(0))   # JogPage
-        self.ui.SettingButton.clicked.connect(lambda: self.change_page(0))  # SettingPage
+        self.ui.SettingButton.clicked.connect(lambda: self.change_page(1))  # SettingPage
 
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)
@@ -112,3 +117,31 @@ class MainWindow(QMainWindow):
         """마우스 릴리즈 이벤트"""
         self._drag_pos = None
         event.accept()
+
+    def closeEvent(self, event):
+        """프로그램 종료 시 정리 작업"""
+        self.serial_manager.stop_serial_thread()
+        super().closeEvent(event)
+
+    def __del__(self):
+        """소멸자"""
+        try:
+            if hasattr(self, 'serial_thread'):
+                self.serial_thread.stop()
+                self.serial_thread.wait()
+        except Exception as e:
+            self.logger.error(f"객체 삭제 중 에러 발생: {str(e)}")
+
+
+class SerialReaderThread(QThread):
+    def __init__(self):
+        super().__init__()
+        self._is_running = True
+        
+    def run(self):
+        while self._is_running:
+            # 시리얼 읽기 작업
+            pass
+            
+    def stop(self):
+        self._is_running = False
