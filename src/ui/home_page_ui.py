@@ -142,7 +142,9 @@ class Ui_HomePage(object):
 
         self.pushButton_2 = QPushButton(self.frame_3)
         self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(20, 70, 75, 24))
+        self.pushButton_2.setGeometry(QRect(50, 80, 75, 21))
+        self.pushButton_2.setMinimumSize(QSize(75, 21))
+        self.pushButton_2.setMaximumSize(QSize(75, 21))
         icon1 = QIcon()
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Normal, QIcon.State.On)
@@ -153,12 +155,10 @@ class Ui_HomePage(object):
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Selected, QIcon.State.Off)
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Selected, QIcon.State.On)
         self.pushButton_2.setIcon(icon1)
-        self.pushButton_2.setIconSize(QSize(70, 70))
+        self.pushButton_2.setIconSize(QSize(75, 75))
         self.pushButton_2.setCheckable(True)
         self.pushButton_2.setChecked(False)
         self.pushButton_2.setAutoRepeat(False)
-        self.pushButton_2.setAutoDefault(False)
-        self.pushButton_2.setFlat(True)
 
         self.horizontalLayout.addWidget(self.frame_3)
 
@@ -167,6 +167,7 @@ class Ui_HomePage(object):
 
         self.frame = QFrame(HomePage)
         self.frame.setObjectName(u"frame")
+        self.frame.setMaximumSize(QSize(16777215, 16777215))
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
 
@@ -174,9 +175,6 @@ class Ui_HomePage(object):
 
 
         self.retranslateUi(HomePage)
-
-        self.pushButton_2.setDefault(False)
-
 
         QMetaObject.connectSlotsByName(HomePage)
     # setupUi
