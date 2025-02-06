@@ -46,11 +46,11 @@ class HomePage(QWidget):
         self.ui.frame.setMinimumHeight(150)
         
         # 메인 전원 버튼 설정
-        self.ui.pushButton_2.setCheckable(True)
-        self.ui.pushButton_2.clicked.connect(self.on_main_power_clicked)
+        self.ui.MainPowerButton.setCheckable(True)
+        self.ui.MainPowerButton.clicked.connect(self.on_main_power_clicked)
         
         # 초기 LED 상태 설정
-        self.ui.label_10.setPixmap(self.led_off)
+        self.ui.MainPowerIndicator.setPixmap(self.led_off)
         
     def on_connection_changed(self, is_connected: bool):
         """시리얼 연결 상태가 변경될 때 호출"""
@@ -85,7 +85,7 @@ class HomePage(QWidget):
         
     def on_main_power_clicked(self):
         """메인 전원 버튼 클릭 핸들러"""
-        success = self.serial_commands.send_main_power_control(self.ui.pushButton_2.isChecked())
+        success = self.serial_commands.send_main_power_control(self.ui.MainPowerButton.isChecked())
         
         if not success:
             # 실패 시 에러 메시지 표시 및 버튼 상태 되돌리기
@@ -93,11 +93,11 @@ class HomePage(QWidget):
                 QMessageBox.warning(self, "경고", "시리얼 포트가 연결되지 않았습니다.")
             else:
                 QMessageBox.critical(self, "오류", "메인 전원 제어 실패")
-            self.ui.pushButton_2.setChecked(not self.ui.pushButton_2.isChecked())
+            self.ui.MainPowerButton.setChecked(not self.ui.MainPowerButton.isChecked())
     
     def update_power_status(self, is_on: bool):
         """전원 상태에 따라 LED 이미지 업데이트"""
         print(f"전원 상태 업데이트: {'켜짐' if is_on else '꺼짐'}")  # 디버깅용
-        self.ui.label_10.setPixmap(self.led_on if is_on else self.led_off)
+        self.ui.MainPowerIndicator.setPixmap(self.led_on if is_on else self.led_off)
         # 버튼 상태도 동기화
-        self.ui.pushButton_2.setChecked(is_on)
+        self.ui.MainPowerButton.setChecked(is_on)

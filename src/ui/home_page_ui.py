@@ -156,10 +156,10 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_6.addWidget(self.label_9)
 
-        self.pushButton_2 = QPushButton(self.frame_7)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setMinimumSize(QSize(75, 21))
-        self.pushButton_2.setMaximumSize(QSize(75, 21))
+        self.MainPowerButton = QPushButton(self.frame_7)
+        self.MainPowerButton.setObjectName(u"MainPowerButton")
+        self.MainPowerButton.setMinimumSize(QSize(75, 21))
+        self.MainPowerButton.setMaximumSize(QSize(75, 21))
         icon1 = QIcon()
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Normal, QIcon.State.On)
@@ -169,22 +169,22 @@ class Ui_HomePage(object):
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Active, QIcon.State.On)
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Selected, QIcon.State.Off)
         icon1.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Selected, QIcon.State.On)
-        self.pushButton_2.setIcon(icon1)
-        self.pushButton_2.setIconSize(QSize(75, 75))
-        self.pushButton_2.setCheckable(True)
-        self.pushButton_2.setChecked(False)
-        self.pushButton_2.setAutoRepeat(False)
+        self.MainPowerButton.setIcon(icon1)
+        self.MainPowerButton.setIconSize(QSize(75, 75))
+        self.MainPowerButton.setCheckable(True)
+        self.MainPowerButton.setChecked(False)
+        self.MainPowerButton.setAutoRepeat(False)
 
-        self.horizontalLayout_6.addWidget(self.pushButton_2)
+        self.horizontalLayout_6.addWidget(self.MainPowerButton)
 
-        self.label_10 = QLabel(self.frame_7)
-        self.label_10.setObjectName(u"label_10")
-        self.label_10.setMinimumSize(QSize(25, 25))
-        self.label_10.setMaximumSize(QSize(25, 25))
-        self.label_10.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/status_led_y.png"))
-        self.label_10.setScaledContents(True)
+        self.MainPowerIndicator = QLabel(self.frame_7)
+        self.MainPowerIndicator.setObjectName(u"MainPowerIndicator")
+        self.MainPowerIndicator.setMinimumSize(QSize(25, 25))
+        self.MainPowerIndicator.setMaximumSize(QSize(25, 25))
+        self.MainPowerIndicator.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/status_led_y.png"))
+        self.MainPowerIndicator.setScaledContents(True)
 
-        self.horizontalLayout_6.addWidget(self.label_10)
+        self.horizontalLayout_6.addWidget(self.MainPowerIndicator)
 
 
         self.verticalLayout_3.addWidget(self.frame_7)
@@ -221,7 +221,7 @@ class Ui_HomePage(object):
         self.label_8.setText(QCoreApplication.translate("HomePage", u"\uc81c\uc5b4", None))
         self.pushButton.setText("")
         self.label_9.setText(QCoreApplication.translate("HomePage", u"\uba54\uc778 \uc804\uc6d0", None))
-        self.pushButton_2.setText("")
-        self.label_10.setText("")
+        self.MainPowerButton.setText("")
+        self.MainPowerIndicator.setText("")
     # retranslateUi
 
