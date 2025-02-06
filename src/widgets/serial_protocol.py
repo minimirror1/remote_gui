@@ -14,6 +14,7 @@ class FileTransferStage(enum.Enum):
 class ComProtocol(QObject):
     # 시그널 정의
     data_sent = Signal(bytes)  # 데이터 전송 시그널 추가
+    main_power_status_changed = Signal(bool)  # 전원 상태 변경 시그널 추가
 
     # 명령어 및 상수 정의
     CMD_ACK_BIT = 0x8000
@@ -22,6 +23,9 @@ class ComProtocol(QObject):
     CMD_FILE_RECEIVE = 0x0002         # 파일 수신 요청
     CMD_FILE_RECEIVE_ACK = CMD_FILE_RECEIVE | CMD_ACK_BIT
     CMD_CONFIG = 0x0003
+
+    CMD_MAIN_POWER_CONTROL = 0x0100
+    CMD_MAIN_POWER_CONTROL_ACK = CMD_MAIN_POWER_CONTROL | CMD_ACK_BIT
 
     MAX_RETRY_COUNT = 5
     MAX_FILENAME_LENGTH = 256
@@ -271,11 +275,18 @@ class ComProtocol(QObject):
         """
         pass
 
+    def handleMainPowerControlAck(self, senderId, payload):
+        """메인 전원 제어 응답 처리"""
+        if len(payload) >= 1:
+            power_status = bool(payload[0])
+            self.main_power_status_changed.emit(power_status)
+
     def handleUnknownCommand(self, cmd):
         """
         알 수 없는 명령을 수신한 경우의 처리 (필요시 재정의).
         """
         pass
+
 
     def handleFileReceive(self, senderId, payload):
         """
@@ -310,8 +321,12 @@ class ComProtocol(QObject):
             self.handleFileReceive(senderId, payload)
         elif cmd == ComProtocol.CMD_CONFIG:
             self.handleConfig(senderId, payload)
+        elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
+            self.handleMainPowerControlAck(senderId, payload)
         else:
             self.handleUnknownCommand(cmd)
+
+
 
     def resetFileTransferContext(self):
         """

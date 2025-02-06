@@ -106,16 +106,28 @@ class SerialManager(QObject):
     #         return False
     
     def send_packet(self, receiverId: int, senderId: int, cmd: int, data: bytes) -> bool:
-        """프로토콜 패킷을 구성하여 전송합니다."""
-        if not self.protocol:
-            self.error_occurred.emit("프로토콜이 초기화되지 않았습니다")
+        """
+        시리얼 포트로 패킷을 전송합니다.
+        
+        Args:
+            receiverId (int): 수신자 ID
+            senderId (int): 송신자 ID
+            cmd (int): 명령어
+            data (bytes): 전송할 데이터
+            
+        Returns:
+            bool: 전송 성공 여부
+        """
+        if not self.is_port_connected() or not self.protocol:
             return False
         
         try:
-            packet = self.protocol.buildPacket(receiverId, senderId, cmd, data)
-            return self.send_data(packet)
+            # 프로토콜을 통해 데이터 전송
+            self.protocol.sendData(receiverId, senderId, cmd, data)
+            return True
+        
         except Exception as e:
-            self.error_occurred.emit(f"패킷 전송 실패: {str(e)}")
+            print(f"패킷 전송 실패: {str(e)}")
             return False
     
     def start_serial_thread(self) -> None:

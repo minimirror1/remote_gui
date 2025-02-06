@@ -27,3 +27,13 @@ pip freeze > requirements.txt
 ```
 pyside6-rcc .\src\resources\icons\_icons.qrc -o _icons_rc.py 
 ```
+
+실행파일 생성
+
+```
+pyinstaller -w -F .\main.py
+```
+
+-w : 콘솔 비활성
+
+-F : 단일파일 생성

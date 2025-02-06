@@ -109,9 +109,10 @@ class Ui_HomePage(object):
         self.frame_3.setObjectName(u"frame_3")
         self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_3 = QVBoxLayout(self.frame_3)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.widget = QWidget(self.frame_3)
         self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(10, 10, 241, 25))
         self.widget.setMaximumSize(QSize(16777215, 25))
         self.horizontalLayout_5 = QHBoxLayout(self.widget)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
@@ -140,9 +141,23 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_5.addWidget(self.pushButton)
 
-        self.pushButton_2 = QPushButton(self.frame_3)
+
+        self.verticalLayout_3.addWidget(self.widget)
+
+        self.frame_7 = QFrame(self.frame_3)
+        self.frame_7.setObjectName(u"frame_7")
+        self.frame_7.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_6 = QHBoxLayout(self.frame_7)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.label_9 = QLabel(self.frame_7)
+        self.label_9.setObjectName(u"label_9")
+        self.label_9.setMaximumSize(QSize(75, 16777215))
+
+        self.horizontalLayout_6.addWidget(self.label_9)
+
+        self.pushButton_2 = QPushButton(self.frame_7)
         self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(50, 80, 75, 21))
         self.pushButton_2.setMinimumSize(QSize(75, 21))
         self.pushButton_2.setMaximumSize(QSize(75, 21))
         icon1 = QIcon()
@@ -159,6 +174,21 @@ class Ui_HomePage(object):
         self.pushButton_2.setCheckable(True)
         self.pushButton_2.setChecked(False)
         self.pushButton_2.setAutoRepeat(False)
+
+        self.horizontalLayout_6.addWidget(self.pushButton_2)
+
+        self.label_10 = QLabel(self.frame_7)
+        self.label_10.setObjectName(u"label_10")
+        self.label_10.setMinimumSize(QSize(25, 25))
+        self.label_10.setMaximumSize(QSize(25, 25))
+        self.label_10.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/status_led_y.png"))
+        self.label_10.setScaledContents(True)
+
+        self.horizontalLayout_6.addWidget(self.label_10)
+
+
+        self.verticalLayout_3.addWidget(self.frame_7)
+
 
         self.horizontalLayout.addWidget(self.frame_3)
 
@@ -190,6 +220,8 @@ class Ui_HomePage(object):
         self.label_7.setText(QCoreApplication.translate("HomePage", u"000V / 000A / 000W", None))
         self.label_8.setText(QCoreApplication.translate("HomePage", u"\uc81c\uc5b4", None))
         self.pushButton.setText("")
+        self.label_9.setText(QCoreApplication.translate("HomePage", u"\uba54\uc778 \uc804\uc6d0", None))
         self.pushButton_2.setText("")
+        self.label_10.setText("")
     # retranslateUi
 

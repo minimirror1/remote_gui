@@ -4486,5 +4486,8 @@
     <file>icons/font_awesome\solid/z.png</file>
     <file>icons/user/Checkbox_Off.png</file>
     <file>icons/user/Checkbox_On.png</file>
+    <file>icons/user/status_led_r.png</file>
+    <file>icons/user/status_led_g.png</file>
+    <file>icons/user/status_led_y.png</file>
   </qresource>
 </RCC>

@@ -134,134 +134,174 @@
        <property name="frameShadow">
         <enum>QFrame::Shadow::Raised</enum>
        </property>
-       <widget class="QWidget" name="widget" native="true">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>241</width>
-          <height>25</height>
-         </rect>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>25</height>
-         </size>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="label_8">
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>25</height>
-            </size>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>25</height>
+           </size>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <property name="leftMargin">
+            <number>0</number>
            </property>
-           <property name="font">
-            <font>
-             <family>나눔고딕</family>
-             <pointsize>12</pointsize>
-             <bold>true</bold>
-            </font>
+           <property name="topMargin">
+            <number>0</number>
            </property>
-           <property name="text">
-            <string>제어</string>
+           <property name="rightMargin">
+            <number>0</number>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton">
-           <property name="maximumSize">
-            <size>
-             <width>50</width>
-             <height>16777215</height>
-            </size>
+           <property name="bottomMargin">
+            <number>0</number>
            </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="../resources/icons/_icons.qrc">
-             <normaloff>:/material_design/icons/material_design/auto_fix_off.png</normaloff>
-             <normalon>:/material_design/icons/material_design/auto_fix_high.png</normalon>
-             <disabledoff>:/material_design/icons/material_design/auto_fix_off.png</disabledoff>
-             <disabledon>:/material_design/icons/material_design/auto_fix_high.png</disabledon>
-             <activeoff>:/material_design/icons/material_design/auto_fix_off.png</activeoff>
-             <activeon>:/material_design/icons/material_design/auto_fix_high.png</activeon>
-             <selectedoff>:/material_design/icons/material_design/auto_fix_off.png</selectedoff>
-             <selectedon>:/material_design/icons/material_design/auto_fix_high.png</selectedon>:/material_design/icons/material_design/auto_fix_off.png</iconset>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QPushButton" name="pushButton_2">
-        <property name="geometry">
-         <rect>
-          <x>50</x>
-          <y>80</y>
-          <width>75</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>21</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>75</width>
-          <height>21</height>
-         </size>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../resources/icons/_icons.qrc">
-          <normaloff>:/font_awesome_solid/icons/user/Checkbox_Off.png</normaloff>
-          <normalon>:/font_awesome_solid/icons/user/Checkbox_On.png</normalon>
-          <disabledoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</disabledoff>
-          <disabledon>:/font_awesome_solid/icons/user/Checkbox_On.png</disabledon>
-          <activeoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</activeoff>
-          <activeon>:/font_awesome_solid/icons/user/Checkbox_On.png</activeon>
-          <selectedoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</selectedoff>
-          <selectedon>:/font_awesome_solid/icons/user/Checkbox_On.png</selectedon>:/font_awesome_solid/icons/user/Checkbox_Off.png</iconset>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>75</width>
-          <height>75</height>
-         </size>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-        <property name="autoRepeat">
-         <bool>false</bool>
-        </property>
-       </widget>
+           <item>
+            <widget class="QLabel" name="label_8">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <family>나눔고딕</family>
+               <pointsize>12</pointsize>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>제어</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton">
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="../resources/icons/_icons.qrc">
+               <normaloff>:/material_design/icons/material_design/auto_fix_off.png</normaloff>
+               <normalon>:/material_design/icons/material_design/auto_fix_high.png</normalon>
+               <disabledoff>:/material_design/icons/material_design/auto_fix_off.png</disabledoff>
+               <disabledon>:/material_design/icons/material_design/auto_fix_high.png</disabledon>
+               <activeoff>:/material_design/icons/material_design/auto_fix_off.png</activeoff>
+               <activeon>:/material_design/icons/material_design/auto_fix_high.png</activeon>
+               <selectedoff>:/material_design/icons/material_design/auto_fix_off.png</selectedoff>
+               <selectedon>:/material_design/icons/material_design/auto_fix_high.png</selectedon>:/material_design/icons/material_design/auto_fix_off.png</iconset>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_7">
+          <property name="frameShape">
+           <enum>QFrame::Shape::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Shadow::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_9">
+             <property name="maximumSize">
+              <size>
+               <width>75</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>메인 전원</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_2">
+             <property name="minimumSize">
+              <size>
+               <width>75</width>
+               <height>21</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>75</width>
+               <height>21</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="../resources/icons/_icons.qrc">
+               <normaloff>:/font_awesome_solid/icons/user/Checkbox_Off.png</normaloff>
+               <normalon>:/font_awesome_solid/icons/user/Checkbox_On.png</normalon>
+               <disabledoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</disabledoff>
+               <disabledon>:/font_awesome_solid/icons/user/Checkbox_On.png</disabledon>
+               <activeoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</activeoff>
+               <activeon>:/font_awesome_solid/icons/user/Checkbox_On.png</activeon>
+               <selectedoff>:/font_awesome_solid/icons/user/Checkbox_Off.png</selectedoff>
+               <selectedon>:/font_awesome_solid/icons/user/Checkbox_On.png</selectedon>:/font_awesome_solid/icons/user/Checkbox_Off.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>75</width>
+               <height>75</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+             <property name="autoRepeat">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_10">
+             <property name="minimumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>25</width>
+               <height>25</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap resource="../resources/icons/_icons.qrc">:/font_awesome_solid/icons/user/status_led_y.png</pixmap>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
     </layout>
