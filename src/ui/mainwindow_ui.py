@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QMainWindow,
-    QPushButton, QSizePolicy, QSpacerItem, QStackedWidget,
-    QStatusBar, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
+    QMainWindow, QPushButton, QSizePolicy, QSpacerItem,
+    QStackedWidget, QStatusBar, QVBoxLayout, QWidget)
 import _icons_rc
 
 class Ui_MainWindow(object):
@@ -125,6 +125,29 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_3.addWidget(self.tempFrame)
 
+        self.horizontalFrame = QFrame(self.headerContainer)
+        self.horizontalFrame.setObjectName(u"horizontalFrame")
+        self.horizontalFrame.setMaximumSize(QSize(55, 16777215))
+        self.horizontalLayout_4 = QHBoxLayout(self.horizontalFrame)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.labelTx = QLabel(self.horizontalFrame)
+        self.labelTx.setObjectName(u"labelTx")
+        self.labelTx.setMaximumSize(QSize(22, 22))
+        self.labelTx.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.horizontalLayout_4.addWidget(self.labelTx)
+
+        self.labelRx = QLabel(self.horizontalFrame)
+        self.labelRx.setObjectName(u"labelRx")
+        self.labelRx.setMaximumSize(QSize(22, 22))
+        self.labelRx.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.horizontalLayout_4.addWidget(self.labelRx)
+
+
+        self.horizontalLayout_3.addWidget(self.horizontalFrame)
+
         self.windowBtnFrame = QFrame(self.headerContainer)
         self.windowBtnFrame.setObjectName(u"windowBtnFrame")
         self.windowBtnFrame.setMaximumSize(QSize(100, 16777215))
@@ -204,6 +227,8 @@ class Ui_MainWindow(object):
         self.jogButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
         self.SettingButton.setText(QCoreApplication.translate("MainWindow", u"Setting", None))
         self.HelpButton.setText(QCoreApplication.translate("MainWindow", u"Help", None))
+        self.labelTx.setText(QCoreApplication.translate("MainWindow", u"T", None))
+        self.labelRx.setText(QCoreApplication.translate("MainWindow", u"R", None))
         self.minimizeBtn.setText("")
         self.restoreBtn.setText("")
         self.closeBtn.setText("")

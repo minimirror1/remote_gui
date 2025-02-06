@@ -1,6 +1,7 @@
 import enum
 import struct
 import time
+from PySide6.QtCore import QObject, Signal
 
 
 class FileTransferStage(enum.Enum):
@@ -10,7 +11,10 @@ class FileTransferStage(enum.Enum):
     VERIFY_CHECKSUM = 4    # 체크섬 검증
 
 
-class ComProtocol:
+class ComProtocol(QObject):
+    # 시그널 정의
+    data_sent = Signal(bytes)  # 데이터 전송 시그널 추가
+
     # 명령어 및 상수 정의
     CMD_ACK_BIT = 0x8000
     CMD_PING = 0x0001
@@ -93,6 +97,7 @@ class ComProtocol:
         :param serial: 시리얼 입출력을 위한 인터페이스 (write, read 메소드 등 구현되어 있어야 함)
         :param tick: 타이머 혹은 시간 관련 인터페이스 (필요 시 구현)
         """
+        super().__init__()  # QObject 초기화
         self.serial = serial
         self.tick = tick
 
@@ -112,13 +117,14 @@ class ComProtocol:
 
         self.fileContext = ComProtocol.FileTransferContext()
 
-    def sendData(self, receiverId, senderId, cmd, data):
+    def buildPacket(self, receiverId, senderId, cmd, data):
         """
-        데이터를 패킷으로 구성하여 시리얼 인터페이스로 전송한다.
+        데이터를 패킷으로 구성하여 반환한다.
         :param receiverId: 수신자 ID (uint16)
         :param senderId: 송신자 ID (uint16)
         :param cmd: 명령어 (uint16)
         :param data: payload (bytes-like object)
+        :return: 구성된 패킷 (bytes)
         """
         packet = bytearray()
 
@@ -127,7 +133,6 @@ class ComProtocol:
             packet.append(ComProtocol.START_MARKER)
 
         # 패킷 구성: [길이(2바이트), receiverId(2바이트), senderId(2바이트), cmd(2바이트), payload, CRC(2바이트)]
-        # length는 (2 + 2 + 2 + len(data) + 2)
         length = 2 + 2 + 2 + len(data) + 2
         packet.extend(struct.pack('>H', length))
         packet.extend(struct.pack('>H', receiverId))
@@ -135,26 +140,26 @@ class ComProtocol:
         packet.extend(struct.pack('>H', cmd))
         packet.extend(data)
 
-        # CRC 계산 (시작 마커 이후부터 CRC 앞까지)
-        # +2 는 receiverId, senderId, cmd 의 길이, length 2byte 뺀 나머지 길이
+        # CRC 계산
         crc = self.calculateCRC16(packet[ComProtocol.START_SEQUENCE_LENGTH + 2:], 
                                   len(packet) - ComProtocol.START_SEQUENCE_LENGTH - 2)
         packet.extend(struct.pack('>H', crc))
 
+        return packet
 
-         # 시리얼 인터페이스로 전송 (serial 인터페이스는 write(bytes) 메소드를 제공해야 함)
-        #self.serial.write(packet)
-
-        # 시리얼 인터페이스로 전송 및 성공 여부 확인
-        try:
-            bytes_written = self.serial.write(packet)
-            if bytes_written != len(packet):
-                print(f"전송 실패: {bytes_written}/{len(packet)} 바이트만 전송됨")
-                return False
-            return True
-        except Exception as e:
-            print(f"전송 중 오류 발생: {e}")
-            return False
+    def sendData(self, receiverId, senderId, cmd, data):
+        """
+        데이터를 패킷으로 구성하여 시리얼 인터페이스로 전송한다.
+        :param receiverId: 수신자 ID (uint16)
+        :param senderId: 송신자 ID (uint16)
+        :param cmd: 명령어 (uint16)
+        :param data: payload (bytes-like object)
+        """
+        packet = self.buildPacket(receiverId, senderId, cmd, data)
+        result = self.serial.write(packet)
+        if result > 0:
+            self.data_sent.emit(packet)  # 전송 성공 시 시그널 발생
+        return result
 
     def receiveData(self, data):
         """

@@ -35,7 +35,12 @@ class SerialManager(QObject):
         self.reader_thread = None
         self.is_connected = False
         self._baud_rate = 115200
+        self.main_window = None  # MainWindow 참조를 저장할 속성 추가
         
+    def set_main_window(self, window):
+        """MainWindow 인스턴스 참조를 설정합니다."""
+        self.main_window = window
+    
     def get_available_ports(self) -> List[Tuple[str, str]]:
         """사용 가능한 시리얼 포트 목록을 반환합니다."""
         def extract_port_number(port: str) -> int:
@@ -61,6 +66,8 @@ class SerialManager(QObject):
         try:
             self.serial_port = serial.Serial(port_name, self._baud_rate, timeout=1)
             self.protocol = ComProtocol(self.serial_port, None)
+            # 프로토콜의 data_sent 시그널 연결
+            self.protocol.data_sent.connect(self._handle_data_sent)
             self.start_serial_thread()
             self.is_connected = True
             self.connection_changed.emit(True)
@@ -82,17 +89,33 @@ class SerialManager(QObject):
         except Exception as e:
             self.error_occurred.emit(f"연결 해제 실패: {str(e)}")
     
-    def send_data(self, data: bytes) -> bool:
-        """데이터를 전송합니다."""
-        if not self.is_connected or not self.serial_port:
-            self.error_occurred.emit("포트가 연결되지 않았습니다")
-            return False
+    # def send_data(self, data: bytes) -> bool:
+    #     """데이터를 전송합니다."""
+    #     if not self.is_connected or not self.serial_port:
+    #         self.error_occurred.emit("포트가 연결되지 않았습니다")
+    #         return False
             
+    #     try:
+    #         bytes_written = self.serial_port.write(data)
+    #         # TX LED 표시
+    #         if self.main_window:
+    #             self.main_window.indicate_tx()
+    #         return bytes_written == len(data)
+    #     except Exception as e:
+    #         self.error_occurred.emit(f"데이터 전송 실패: {str(e)}")
+    #         return False
+    
+    def send_packet(self, receiverId: int, senderId: int, cmd: int, data: bytes) -> bool:
+        """프로토콜 패킷을 구성하여 전송합니다."""
+        if not self.protocol:
+            self.error_occurred.emit("프로토콜이 초기화되지 않았습니다")
+            return False
+        
         try:
-            self.serial_port.write(data)
-            return True
+            packet = self.protocol.buildPacket(receiverId, senderId, cmd, data)
+            return self.send_data(packet)
         except Exception as e:
-            self.error_occurred.emit(f"데이터 전송 실패: {str(e)}")
+            self.error_occurred.emit(f"패킷 전송 실패: {str(e)}")
             return False
     
     def start_serial_thread(self) -> None:
@@ -115,6 +138,9 @@ class SerialManager(QObject):
             self.protocol.receiveData(data)
             self.protocol.processReceivedData()
         self.data_received.emit(data)
+        # RX LED 표시
+        if self.main_window:
+            self.main_window.indicate_rx()
     
     def get_protocol(self) -> Optional[ComProtocol]:
         """현재 ComProtocol 인스턴스를 반환합니다."""
@@ -128,4 +154,11 @@ class SerialManager(QObject):
         """현재 연결된 포트 이름을 반환합니다."""
         if self.serial_port and self.serial_port.is_open:
             return self.serial_port.port
-        return None 
+        return None
+
+    @Slot(bytes)
+    def _handle_data_sent(self, data: bytes) -> None:
+        """ComProtocol에서 데이터가 전송되었을 때 호출되는 핸들러"""
+        # TX LED 표시
+        if self.main_window:
+            self.main_window.indicate_tx() 

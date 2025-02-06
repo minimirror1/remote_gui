@@ -13,6 +13,7 @@ from PySide6.QtCore import QSize
 import logging
 from PySide6.QtCore import QThread
 from src.serial_manager import SerialManager
+from PySide6.QtCore import QTimer
 
 
 class MainWindow(QMainWindow):
@@ -32,6 +33,7 @@ class MainWindow(QMainWindow):
 
         # SerialManager 인스턴스 가져오기
         self.serial_manager = SerialManager.get_instance()
+        self.serial_manager.set_main_window(self)  # MainWindow 참조 설정
         
         # 스레드 초기화
         self.serial_thread = SerialReaderThread()
@@ -40,7 +42,44 @@ class MainWindow(QMainWindow):
         # 마우스 드래그를 위한 변수 초기화
         self._drag_pos = None
 
-        # 추가 UI 초기화 및 시그널-슬롯 연결 함수 호출
+        # LED 타이머 초기화
+        self.tx_timer = QTimer(self)
+        self.rx_timer = QTimer(self)
+        self.tx_timer.timeout.connect(self.turn_off_tx)
+        self.rx_timer.timeout.connect(self.turn_off_rx)
+        
+        # LED 스타일시트
+        self.LED_TX_ON_STYLE = """
+            background-color: #ff0000;
+            border: 2px solid black;
+            border-radius: 5px;
+            color: white;
+            min-width: 12px;
+            min-height: 12px;
+            qproperty-alignment: AlignCenter;
+        """
+        
+        self.LED_RX_ON_STYLE = """
+            background-color: #00ff00;
+            border: 2px solid black;
+            border-radius: 5px;
+            color: white;
+            min-width: 12px;
+            min-height: 12px;
+            qproperty-alignment: AlignCenter;
+        """
+        
+        self.LED_OFF_STYLE = """
+            background-color: #808080;
+            border: 2px solid black;
+            border-radius: 5px;
+            color: white;
+            min-width: 12px;
+            min-height: 12px;
+            qproperty-alignment: AlignCenter;
+        """
+        
+        # 초기 LED 상태 설정
         self.init_ui()
 
     def init_ui(self):
@@ -75,6 +114,10 @@ class MainWindow(QMainWindow):
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)
         self.ui.headerContainer.setAttribute(Qt.WA_TransparentForMouseEvents, False)
+
+        # LED 초기 스타일 설정
+        self.ui.labelTx.setStyleSheet(self.LED_OFF_STYLE)
+        self.ui.labelRx.setStyleSheet(self.LED_OFF_STYLE)
 
     def toggle_maximize_restore(self):
         if self.isMaximized():
@@ -131,6 +174,26 @@ class MainWindow(QMainWindow):
                 self.serial_thread.wait()
         except Exception as e:
             self.logger.error(f"객체 삭제 중 에러 발생: {str(e)}")
+
+    def indicate_tx(self):
+        """TX LED를 켜고 타이머 시작"""
+        self.ui.labelTx.setStyleSheet(self.LED_TX_ON_STYLE)
+        self.tx_timer.start(100)  # 100ms 후 LED 끄기
+
+    def indicate_rx(self):
+        """RX LED를 켜고 타이머 시작"""
+        self.ui.labelRx.setStyleSheet(self.LED_RX_ON_STYLE)
+        self.rx_timer.start(100)  # 100ms 후 LED 끄기
+
+    def turn_off_tx(self):
+        """TX LED 끄기"""
+        self.ui.labelTx.setStyleSheet(self.LED_OFF_STYLE)
+        self.tx_timer.stop()
+
+    def turn_off_rx(self):
+        """RX LED 끄기"""
+        self.ui.labelRx.setStyleSheet(self.LED_OFF_STYLE)
+        self.rx_timer.stop()
 
 
 class SerialReaderThread(QThread):
