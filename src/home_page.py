@@ -64,6 +64,7 @@ class HomePage(QWidget):
         if self._power_status_connected and self._current_protocol:
             try:
                 self._current_protocol.main_power_status_changed.disconnect(self.update_power_status)
+                self._current_protocol.status_sync_changed.disconnect(self.update_status_info)
             except:
                 pass
             self._power_status_connected = False
@@ -80,6 +81,7 @@ class HomePage(QWidget):
             # 새로운 연결 설정
             if not self._power_status_connected:
                 protocol.main_power_status_changed.connect(self.update_power_status)
+                protocol.status_sync_changed.connect(self.update_status_info)
                 self._power_status_connected = True
                 self._current_protocol = protocol
         
@@ -101,3 +103,24 @@ class HomePage(QWidget):
         self.ui.MainPowerIndicator.setPixmap(self.led_on if is_on else self.led_off)
         # 버튼 상태도 동기화
         self.ui.MainPowerButton.setChecked(is_on)
+
+    def update_status_info(self, status_data: dict):
+        """상태 정보 업데이트"""
+        # 연속구동시간 업데이트 (00h00m00s 형식)
+        time_info = status_data['time']
+        runtime_text = f"{time_info['hours']:02d}h{time_info['minutes']:02d}m{time_info['seconds']:02d}s"
+        self.ui.runTimeLabel.setText(runtime_text)
+        
+        # 회차 정보 업데이트 (0/0 형식)
+        count_info = status_data['count']
+        round_text = f"{count_info['current']}/{count_info['total']}"
+        self.ui.roundLabel.setText(round_text)
+        
+        # 에너지 정보 업데이트 (000V / 000A / 000W 형식)
+        power_info = status_data['power']
+        voltage = power_info['voltage'] / 100.0  # 전압값이 100배로 전송된다고 가정
+        current = power_info['current'] / 100.0  # 전류값이 100배로 전송된다고 가정
+        power = voltage * current  # 전력 계산
+        
+        energy_text = f"{voltage:.1f}V / {current:.1f}A / {power:.1f}W"
+        self.ui.energyLabel.setText(energy_text)

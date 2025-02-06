@@ -15,6 +15,7 @@ class ComProtocol(QObject):
     # 시그널 정의
     data_sent = Signal(bytes)  # 데이터 전송 시그널 추가
     main_power_status_changed = Signal(bool)  # 전원 상태 변경 시그널 추가
+    status_sync_changed = Signal(dict)  # 시간, 카운트, 전압/전류 정보를 딕셔너리로 전달
 
     # 명령어 및 상수 정의
     CMD_ACK_BIT = 0x8000
@@ -23,6 +24,9 @@ class ComProtocol(QObject):
     CMD_FILE_RECEIVE = 0x0002         # 파일 수신 요청
     CMD_FILE_RECEIVE_ACK = CMD_FILE_RECEIVE | CMD_ACK_BIT
     CMD_CONFIG = 0x0003
+
+    CMD_STATUS_SYNC = 0x0010
+    CMD_STATUS_SYNC_ACK = CMD_STATUS_SYNC | CMD_ACK_BIT
 
     CMD_MAIN_POWER_CONTROL = 0x0100
     CMD_MAIN_POWER_CONTROL_ACK = CMD_MAIN_POWER_CONTROL | CMD_ACK_BIT
@@ -274,9 +278,52 @@ class ComProtocol(QObject):
         설정 관련 패킷 수신에 대한 처리 (필요시 재정의).
         """
         pass
+    
+    def handleStatusSyncAck(self, senderId, payload):
+        """상태 동기화 응답 처리"""
+        if len(payload) < 11:  # 페이로드 길이 체크
+            return
+
+        try:
+            # 시간 정보 파싱
+            hours = payload[0]
+            minutes = payload[1]
+            seconds = payload[2]
+
+            # 동작 회차 정보 파싱
+            current_count = struct.unpack('>H', payload[3:5])[0]
+            total_count = struct.unpack('>H', payload[5:7])[0]
+
+            # 에너지 정보 파싱
+            voltage = struct.unpack('>H', payload[7:9])[0]
+            current = struct.unpack('>H', payload[9:11])[0]
+
+            # 데이터를 딕셔너리로 구성
+            status_data = {
+                'time': {
+                    'hours': hours,
+                    'minutes': minutes,
+                    'seconds': seconds
+                },
+                'count': {
+                    'current': current_count,
+                    'total': total_count
+                },
+                'power': {
+                    'voltage': voltage,
+                    'current': current
+                }
+            }
+
+            # 시그널 발생
+            self.status_sync_changed.emit(status_data)
+
+        except Exception as e:
+            print(f"Status sync data parsing error: {e}")
 
     def handleMainPowerControlAck(self, senderId, payload):
         """메인 전원 제어 응답 처리"""
+
         if len(payload) >= 1:
             power_status = bool(payload[0])
             self.main_power_status_changed.emit(power_status)
@@ -321,8 +368,11 @@ class ComProtocol(QObject):
             self.handleFileReceive(senderId, payload)
         elif cmd == ComProtocol.CMD_CONFIG:
             self.handleConfig(senderId, payload)
+        elif cmd == ComProtocol.CMD_STATUS_SYNC_ACK:
+            self.handleStatusSyncAck(senderId, payload)
         elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
             self.handleMainPowerControlAck(senderId, payload)
+
         else:
             self.handleUnknownCommand(cmd)
 
@@ -385,6 +435,21 @@ class ComProtocol(QObject):
         """
         self.sendFileAck(receiverId, stage, success, data)
 
+    def send_sync_packet(self, receiverId: int, senderId: int) -> None:
+        """
+        상태 동기화를 위한 sync 패킷을 전송합니다.
+        
+        Args:
+            receiverId (int): 수신자 ID
+            senderId (int): 송신자 ID
+        """
+        self.sendData(
+            receiverId=receiverId,
+            senderId=senderId,
+            cmd=self.CMD_STATUS_SYNC,
+            data=bytes()
+        )
+
 """
 # ======================================================================
 # 예제: 간단한 시리얼 인터페이스 모의 구현
@@ -411,9 +476,4 @@ if __name__ == "__main__":
     # 예제: 수신 데이터(실제 환경에서는 시리얼 포트로부터 읽어온 데이터를 receiveData()로 전달)
     # 여기서는 임의의 패킷을 구성하여 프로토콜 처리 테스트
     # 패킷 구성은 sendData()의 구성과 동일하게 만들어야 함
-    test_payload = b'Hello'
-    protocol.sendData(0x0002, 0x0001, ComProtocol.CMD_PING, test_payload)
-    # 전송된 패킷을 임의로 수신 버퍼에 넣고 처리
-    # (실제 환경에서는 serial.read() 등을 통해 데이터를 받아 processReceivedData()를 호출)
-    # 여기서는 예제 목적으로 sendData()에서 출력한 패킷을 그대로 사용
 """

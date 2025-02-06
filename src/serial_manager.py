@@ -17,6 +17,10 @@ class SerialManager(QObject):
     _instance = None
     _lock = threading.Lock()
     
+    # 클래스 상수 정의
+    DEFAULT_HOST_ID = 0x0000
+    DEFAULT_DEVICE_ID = 0x0001
+    
     @classmethod
     def get_instance(cls) -> 'SerialManager':
         if cls._instance is None:
@@ -57,7 +61,7 @@ class SerialManager(QObject):
         # COM 번호를 기준으로 정렬
         return sorted(port_list, key=lambda x: extract_port_number(x[0]))
     
-    @Slot(str)
+    @Slot()
     def connect_to_port(self, port_name: str) -> bool:
         """지정된 포트에 연결을 시도합니다."""
         if self.is_connected:
@@ -68,10 +72,14 @@ class SerialManager(QObject):
             self.protocol = ComProtocol(self.serial_port, None)
             # 프로토콜의 data_sent 시그널 연결
             self.protocol.data_sent.connect(self._handle_data_sent)
+            
+            # 시리얼 스레드 시작 (protocol 설정 후)
             self.start_serial_thread()
+            
             self.is_connected = True
             self.connection_changed.emit(True)
             return True
+            
         except Exception as e:
             self.error_occurred.emit(f"연결 실패: {str(e)}")
             return False
@@ -133,8 +141,9 @@ class SerialManager(QObject):
     def start_serial_thread(self) -> None:
         """시리얼 데이터 수신 스레드를 시작합니다."""
         if self.serial_port and self.serial_port.is_open:
-            self.reader_thread = SerialReaderThread(self.serial_port)
+            self.reader_thread = SerialReaderThread(self.serial_port, self)  # self를 parent로 전달
             self.reader_thread.data_received.connect(self._handle_received_data)
+            self.reader_thread.error_occurred.connect(self.error_occurred.emit)  # 에러 시그널 연결
             self.reader_thread.start()
     
     def stop_serial_thread(self) -> None:
@@ -174,3 +183,64 @@ class SerialManager(QObject):
         # TX LED 표시
         if self.main_window:
             self.main_window.indicate_tx() 
+
+    def send_sync_packet(self, receiverId: int = None, senderId: int = None) -> bool:
+        """
+        상태 동기화를 위한 sync 패킷을 전송합니다.
+        
+        Args:
+            receiverId (int, optional): 수신자 ID. 
+                                      기본값은 DEFAULT_DEVICE_ID (0x0001)
+            senderId (int, optional): 송신자 ID. 
+                                    기본값은 DEFAULT_HOST_ID (0x0000)
+            
+        Returns:
+            bool: 전송 성공 여부
+        """
+        if not self.is_port_connected() or not self.protocol:
+            self.error_occurred.emit("포트가 연결되지 않았습니다")
+            return False
+            
+        try:
+            # 기본값 설정
+            if receiverId is None:
+                receiverId = self.DEFAULT_DEVICE_ID
+            if senderId is None:
+                senderId = self.DEFAULT_HOST_ID
+                
+            # ComProtocol의 sync 패킷 전송 메서드 호출
+            self.protocol.send_sync_packet(receiverId, senderId)
+            return True
+            
+        except Exception as e:
+            error_msg = f"Sync 패킷 전송 실패: {str(e)}"
+            self.error_occurred.emit(error_msg)
+            return False 
+
+    def get_reader_thread(self) -> Optional['SerialReaderThread']:
+        """현재 실행 중인 SerialReaderThread 인스턴스를 반환합니다."""
+        # 단순히 reader_thread 반환 (연결 상태와 관계없이)
+        return self.reader_thread
+
+    @Slot()
+    def connect_to_port(self, port_name: str) -> bool:
+        """지정된 포트에 연결을 시도합니다."""
+        if self.is_connected:
+            self.disconnect_port()
+            
+        try:
+            self.serial_port = serial.Serial(port_name, self._baud_rate, timeout=1)
+            self.protocol = ComProtocol(self.serial_port, None)
+            # 프로토콜의 data_sent 시그널 연결
+            self.protocol.data_sent.connect(self._handle_data_sent)
+            
+            # 시리얼 스레드 시작 (protocol 설정 후)
+            self.start_serial_thread()
+            
+            self.is_connected = True
+            self.connection_changed.emit(True)
+            return True
+            
+        except Exception as e:
+            self.error_occurred.emit(f"연결 실패: {str(e)}")
+            return False 

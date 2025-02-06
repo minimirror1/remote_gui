@@ -56,10 +56,10 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_2.addWidget(self.label_2)
 
-        self.label_3 = QLabel(self.frame_4)
-        self.label_3.setObjectName(u"label_3")
+        self.runTimeLabel = QLabel(self.frame_4)
+        self.runTimeLabel.setObjectName(u"runTimeLabel")
 
-        self.horizontalLayout_2.addWidget(self.label_3)
+        self.horizontalLayout_2.addWidget(self.runTimeLabel)
 
 
         self.verticalLayout_2.addWidget(self.frame_4)
@@ -75,10 +75,10 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_3.addWidget(self.label_4)
 
-        self.label_5 = QLabel(self.frame_5)
-        self.label_5.setObjectName(u"label_5")
+        self.roundLabel = QLabel(self.frame_5)
+        self.roundLabel.setObjectName(u"roundLabel")
 
-        self.horizontalLayout_3.addWidget(self.label_5)
+        self.horizontalLayout_3.addWidget(self.roundLabel)
 
 
         self.verticalLayout_2.addWidget(self.frame_5)
@@ -94,10 +94,10 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_4.addWidget(self.label_6)
 
-        self.label_7 = QLabel(self.frame_6)
-        self.label_7.setObjectName(u"label_7")
+        self.energyLabel = QLabel(self.frame_6)
+        self.energyLabel.setObjectName(u"energyLabel")
 
-        self.horizontalLayout_4.addWidget(self.label_7)
+        self.horizontalLayout_4.addWidget(self.energyLabel)
 
 
         self.verticalLayout_2.addWidget(self.frame_6)
@@ -213,11 +213,11 @@ class Ui_HomePage(object):
         HomePage.setWindowTitle(QCoreApplication.translate("HomePage", u"Form", None))
         self.label.setText(QCoreApplication.translate("HomePage", u"\ub3d9\uc791 \uc0c1\ud0dc", None))
         self.label_2.setText(QCoreApplication.translate("HomePage", u"\uc5f0\uc18d \uad6c\ub3d9 \uc2dc\uac04", None))
-        self.label_3.setText(QCoreApplication.translate("HomePage", u"00h00m00s", None))
+        self.runTimeLabel.setText(QCoreApplication.translate("HomePage", u"00h00m00s", None))
         self.label_4.setText(QCoreApplication.translate("HomePage", u"\ud68c\ucc28", None))
-        self.label_5.setText(QCoreApplication.translate("HomePage", u"0/0", None))
+        self.roundLabel.setText(QCoreApplication.translate("HomePage", u"0/0", None))
         self.label_6.setText(QCoreApplication.translate("HomePage", u"\uc5d0\ub108\uc9c0", None))
-        self.label_7.setText(QCoreApplication.translate("HomePage", u"000V / 000A / 000W", None))
+        self.energyLabel.setText(QCoreApplication.translate("HomePage", u"000V / 000A / 000W", None))
         self.label_8.setText(QCoreApplication.translate("HomePage", u"\uc81c\uc5b4", None))
         self.pushButton.setText("")
         self.label_9.setText(QCoreApplication.translate("HomePage", u"\uba54\uc778 \uc804\uc6d0", None))

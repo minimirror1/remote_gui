@@ -62,7 +62,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_3">
+            <widget class="QLabel" name="runTimeLabel">
              <property name="text">
               <string>00h00m00s</string>
              </property>
@@ -88,7 +88,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_5">
+            <widget class="QLabel" name="roundLabel">
              <property name="text">
               <string>0/0</string>
              </property>
@@ -114,7 +114,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_7">
+            <widget class="QLabel" name="energyLabel">
              <property name="text">
               <string>000V / 000A / 000W</string>
              </property>
