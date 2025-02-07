@@ -78,7 +78,7 @@ class Ui_SettingPage(object):
         self.sync_ms_spinBox.setObjectName(u"sync_ms_spinBox")
         self.sync_ms_spinBox.setMinimum(200)
         self.sync_ms_spinBox.setMaximum(5000)
-        self.sync_ms_spinBox.setSingleStep(5)
+        self.sync_ms_spinBox.setSingleStep(50)
 
         self.verticalLayout_3.addWidget(self.sync_ms_spinBox)
 

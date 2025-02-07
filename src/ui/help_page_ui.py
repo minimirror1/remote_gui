@@ -15,13 +15,30 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QSizePolicy, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QLabel, QSizePolicy,
+    QVBoxLayout, QWidget)
 
 class Ui_HelpPage(object):
     def setupUi(self, HelpPage):
         if not HelpPage.objectName():
             HelpPage.setObjectName(u"HelpPage")
         HelpPage.resize(640, 480)
+        self.verticalLayout = QVBoxLayout(HelpPage)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.frame = QFrame(HelpPage)
+        self.frame.setObjectName(u"frame")
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.frame)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.versionLabel = QLabel(self.frame)
+        self.versionLabel.setObjectName(u"versionLabel")
+
+        self.verticalLayout_2.addWidget(self.versionLabel)
+
+
+        self.verticalLayout.addWidget(self.frame)
+
 
         self.retranslateUi(HelpPage)
 
@@ -30,5 +47,6 @@ class Ui_HelpPage(object):
 
     def retranslateUi(self, HelpPage):
         HelpPage.setWindowTitle(QCoreApplication.translate("HelpPage", u"Form", None))
+        self.versionLabel.setText(QCoreApplication.translate("HelpPage", u"Version : 0.0.0", None))
     # retranslateUi
 
