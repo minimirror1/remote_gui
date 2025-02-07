@@ -32,6 +32,8 @@ pyside6-rcc .\src\resources\icons\_icons.qrc -o _icons_rc.py
 
 ```
 pyinstaller -w -F .\main.py
+pyinstaller -w .\main.py
+pyinstaller -F .\main.py
 ```
 
 -w : 콘솔 비활성
