@@ -15,10 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
-    QLabel, QPushButton, QScrollArea, QSizePolicy,
-    QSpinBox, QVBoxLayout, QWidget)
-import _icons_rc
+from PySide6.QtWidgets import (QApplication, QGroupBox, QHBoxLayout, QPushButton,
+    QScrollArea, QSizePolicy, QSpacerItem, QVBoxLayout,
+    QWidget)
 
 class Ui_SettingPage(object):
     def setupUi(self, SettingPage):
@@ -37,7 +36,7 @@ class Ui_SettingPage(object):
         self.SerialPortScrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 391, 162))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 247, 162))
         self.SerialPortScrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.horizontalLayout.addWidget(self.SerialPortScrollArea)
@@ -59,52 +58,9 @@ class Ui_SettingPage(object):
 
         self.horizontalLayout.addWidget(self.widget)
 
-        self.frame = QFrame(self.groupBox)
-        self.frame.setObjectName(u"frame")
-        self.frame.setMinimumSize(QSize(100, 0))
-        self.frame.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.verticalLayout_3 = QVBoxLayout(self.frame)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.label = QLabel(self.frame)
-        self.label.setObjectName(u"label")
-        self.label.setMinimumSize(QSize(0, 20))
-        self.label.setMaximumSize(QSize(16777215, 20))
+        self.horizontalSpacer = QSpacerItem(245, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.verticalLayout_3.addWidget(self.label)
-
-        self.sync_ms_spinBox = QSpinBox(self.frame)
-        self.sync_ms_spinBox.setObjectName(u"sync_ms_spinBox")
-        self.sync_ms_spinBox.setMinimum(200)
-        self.sync_ms_spinBox.setMaximum(5000)
-        self.sync_ms_spinBox.setSingleStep(5)
-
-        self.verticalLayout_3.addWidget(self.sync_ms_spinBox)
-
-        self.sync_enable = QPushButton(self.frame)
-        self.sync_enable.setObjectName(u"sync_enable")
-        self.sync_enable.setMinimumSize(QSize(75, 21))
-        self.sync_enable.setMaximumSize(QSize(75, 21))
-        icon = QIcon()
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Normal, QIcon.State.On)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Disabled, QIcon.State.Off)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Disabled, QIcon.State.On)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Active, QIcon.State.Off)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Active, QIcon.State.On)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_Off.png", QSize(), QIcon.Mode.Selected, QIcon.State.Off)
-        icon.addFile(u":/font_awesome_solid/icons/user/Checkbox_On.png", QSize(), QIcon.Mode.Selected, QIcon.State.On)
-        self.sync_enable.setIcon(icon)
-        self.sync_enable.setIconSize(QSize(75, 75))
-        self.sync_enable.setCheckable(True)
-        self.sync_enable.setChecked(False)
-        self.sync_enable.setAutoRepeat(False)
-
-        self.verticalLayout_3.addWidget(self.sync_enable)
-
-
-        self.horizontalLayout.addWidget(self.frame)
+        self.horizontalLayout.addItem(self.horizontalSpacer)
 
 
         self.verticalLayout.addWidget(self.groupBox)
@@ -128,9 +84,7 @@ class Ui_SettingPage(object):
         self.groupBox.setTitle(QCoreApplication.translate("SettingPage", u"Serial Port", None))
         self.SerialRefreshButton.setText(QCoreApplication.translate("SettingPage", u"\uc0c8\ub85c\uace0\uce68", None))
         self.SerialConnectButton.setText(QCoreApplication.translate("SettingPage", u"\uc5f0\uacb0", None))
-        self.label.setText(QCoreApplication.translate("SettingPage", u"sync \uc8fc\uae30 (ms)", None))
-        self.sync_enable.setText("")
-        self.groupBox_2.setTitle(QCoreApplication.translate("SettingPage", u"GroupBox", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("SettingPage", u"BT node", None))
         self.pushButton_3.setText(QCoreApplication.translate("SettingPage", u"PushButton", None))
     # retranslateUi
 
