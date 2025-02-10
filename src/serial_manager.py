@@ -6,6 +6,8 @@ from src.widgets.serial_protocol import ComProtocol
 from src.widgets.serial_reader import SerialReaderThread
 import threading
 import re  # 파일 상단에 추가
+from threading import Lock  # 파일 상단에 추가
+import time  # 파일 상단에 추가
 
 class SerialManager(QObject):
     """시리얼 통신 관리자 클래스"""
@@ -41,6 +43,10 @@ class SerialManager(QObject):
         self._baud_rate = 115200
         self.main_window = None  # MainWindow 참조를 저장할 속성 추가
         self._error_dialog_shown = False  # 에러 다이얼로그 표시 상태 추적
+        self._send_lock = Lock()  # 전송 뮤텍스 추가
+        self._write_timeout = 1.0  # 쓰기 타임아웃을 1초로 증가
+        self._max_retries = 3  # 최대 재시도 횟수
+        self._retry_delay = 0.05  # 재시도 간격 (50ms)
         
     def set_main_window(self, window):
         """MainWindow 인스턴스 참조를 설정합니다."""
@@ -69,7 +75,12 @@ class SerialManager(QObject):
             self.disconnect_port()
             
         try:
-            self.serial_port = serial.Serial(port_name, self._baud_rate, timeout=1)
+            self.serial_port = serial.Serial(
+                port_name, 
+                self._baud_rate, 
+                timeout=1,
+                write_timeout=self._write_timeout  # 쓰기 타임아웃 설정
+            )
             self.protocol = ComProtocol(self.serial_port, None)
             self.protocol.data_sent.connect(self._handle_data_sent)
             
@@ -101,46 +112,47 @@ class SerialManager(QObject):
         except Exception as e:
             self.error_occurred.emit(f"연결 해제 실패: {str(e)}")
     
-    # def send_data(self, data: bytes) -> bool:
-    #     """데이터를 전송합니다."""
-    #     if not self.is_connected or not self.serial_port:
-    #         self.error_occurred.emit("포트가 연결되지 않았습니다")
-    #         return False
-            
-    #     try:
-    #         bytes_written = self.serial_port.write(data)
-    #         # TX LED 표시
-    #         if self.main_window:
-    #             self.main_window.indicate_tx()
-    #         return bytes_written == len(data)
-    #     except Exception as e:
-    #         self.error_occurred.emit(f"데이터 전송 실패: {str(e)}")
-    #         return False
-    
     def send_packet(self, receiverId: int, senderId: int, cmd: int, data: bytes) -> bool:
         """
         시리얼 포트로 패킷을 전송합니다.
-        
-        Args:
-            receiverId (int): 수신자 ID
-            senderId (int): 송신자 ID
-            cmd (int): 명령어
-            data (bytes): 전송할 데이터
-            
-        Returns:
-            bool: 전송 성공 여부
+        재시도 로직이 포함되어 있습니다.
         """
         if not self.is_port_connected() or not self.protocol:
             return False
         
-        try:
-            # 프로토콜을 통해 데이터 전송
-            self.protocol.sendData(receiverId, senderId, cmd, data)
-            return True
-        
-        except Exception as e:
-            print(f"패킷 전송 실패: {str(e)}")
-            return False
+        retries = 0
+        while retries < self._max_retries:
+            try:
+                with self._send_lock:  # 뮤텍스로 보호된 전송
+                    # SYNC 패킷이 아닌 경우 우선순위를 높임
+                    if cmd != ComProtocol.CMD_STATUS_SYNC:
+                        # 현재 write_timeout 저장
+                        original_timeout = self.serial_port.write_timeout
+                        try:
+                            # 제어 패킷은 더 긴 타임아웃 사용
+                            self.serial_port.write_timeout = self._write_timeout
+                            self.protocol.sendData(receiverId, senderId, cmd, data)
+                            return True
+                        finally:
+                            # 원래 타임아웃으로 복원
+                            self.serial_port.write_timeout = original_timeout
+                    else:
+                        # SYNC 패킷은 기존 타임아웃 사용
+                        self.protocol.sendData(receiverId, senderId, cmd, data)
+                        return True
+                    
+            except serial.SerialTimeoutException:
+                print(f"시리얼 쓰기 타임아웃 발생 (재시도 {retries + 1}/{self._max_retries})")
+                retries += 1
+                if retries < self._max_retries:
+                    time.sleep(self._retry_delay)  # 재시도 전 대기
+                continue
+                
+            except Exception as e:
+                print(f"패킷 전송 실패: {str(e)}")
+                return False
+                
+        return False  # 모든 재시도 실패
     
     def start_serial_thread(self) -> None:
         """시리얼 데이터 수신 스레드를 시작합니다."""
@@ -309,7 +321,12 @@ class SerialManager(QObject):
             self.disconnect_port()
             
         try:
-            self.serial_port = serial.Serial(port_name, self._baud_rate, timeout=1)
+            self.serial_port = serial.Serial(
+                port_name, 
+                self._baud_rate, 
+                timeout=1,
+                write_timeout=self._write_timeout  # 쓰기 타임아웃 설정
+            )
             self.protocol = ComProtocol(self.serial_port, None)
             # 프로토콜의 data_sent 시그널 연결
             self.protocol.data_sent.connect(self._handle_data_sent)

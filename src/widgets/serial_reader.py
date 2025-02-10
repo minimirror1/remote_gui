@@ -1,4 +1,5 @@
 from PySide6.QtCore import QThread, Signal
+from threading import Lock  # threading에서 Lock import
 import time
 import serial
 from serial.serialutil import SerialException
@@ -21,6 +22,9 @@ class SerialReaderThread(QThread):
         self._sync_interval = 1000
         self._last_sync_time = 0
         self._error_reported = False
+        self._sync_lock = Lock()
+        self._write_timeout = 0.1  # sync 전송 타임아웃 (100ms)
+        self._sync_retry_delay = 0.02  # sync 재시도 간격 (20ms)
 
     def run(self):
         while self._running:
@@ -31,23 +35,39 @@ class SerialReaderThread(QThread):
                         self._error_reported = True
                     break
 
-                # 수신 데이터 처리
+                # 먼저 데이터 수신 처리 (우선순위 높임)
                 bytes_waiting = self.serial_port.in_waiting
                 if bytes_waiting:
                     data = self.serial_port.read(bytes_waiting)
                     self.data_received.emit(data)
-                
+
                 # Sync 패킷 전송 처리
                 if self._sync_enabled:
                     current_time = time.time() * 1000
                     if current_time - self._last_sync_time >= self._sync_interval:
-                        self._last_sync_time = current_time
-                        serial_manager = self.parent()
-                        if serial_manager and serial_manager.protocol:
-                            try:
-                                serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
-                            except:
-                                pass  # sync 실패는 무시
+                        try:
+                            with self._sync_lock:
+                                serial_manager = self.parent()
+                                if serial_manager and serial_manager.protocol:
+                                    # SYNC 패킷 전송 시도
+                                    try:
+                                        serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
+                                        self._last_sync_time = current_time
+                                    except serial.SerialTimeoutException:
+                                        print("Sync 전송 타임아웃, 잠시 후 재시도")
+                                        # 짧은 대기 후 한 번 더 시도
+                                        time.sleep(self._sync_retry_delay)
+                                        try:
+                                            serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
+                                            self._last_sync_time = current_time
+                                        except:
+                                            # 두 번째 시도도 실패하면 다음 주기로
+                                            self._last_sync_time = current_time
+                                            pass
+
+                        except Exception as e:
+                            print(f"Sync 전송 중 오류 발생: {str(e)}")
+                            self._last_sync_time = current_time
 
             except (serial.SerialException) as e:
                 if not self._error_reported:
