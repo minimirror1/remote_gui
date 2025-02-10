@@ -40,6 +40,7 @@ class SerialManager(QObject):
         self.is_connected = False
         self._baud_rate = 115200
         self.main_window = None  # MainWindow 참조를 저장할 속성 추가
+        self._error_dialog_shown = False  # 에러 다이얼로그 표시 상태 추적
         
     def set_main_window(self, window):
         """MainWindow 인스턴스 참조를 설정합니다."""
@@ -63,20 +64,23 @@ class SerialManager(QObject):
     
     @Slot()
     def connect_to_port(self, port_name: str) -> bool:
-        """지정된 포트에 연결을 시도합니다."""
+        """지정된 포트에 연결"""
         if self.is_connected:
             self.disconnect_port()
             
         try:
             self.serial_port = serial.Serial(port_name, self._baud_rate, timeout=1)
             self.protocol = ComProtocol(self.serial_port, None)
-            # 프로토콜의 data_sent 시그널 연결
             self.protocol.data_sent.connect(self._handle_data_sent)
             
-            # 시리얼 스레드 시작 (protocol 설정 후)
             self.start_serial_thread()
             
+            # 연결 끊김 시그널 연결
+            if self.reader_thread:
+                self.reader_thread.connection_lost.connect(self._handle_connection_lost)
+            
             self.is_connected = True
+            self._error_dialog_shown = False  # 에러 다이얼로그 상태 초기화
             self.connection_changed.emit(True)
             return True
             
@@ -153,6 +157,82 @@ class SerialManager(QObject):
             self.reader_thread = None
     
     @Slot(bytes)
+    def _handle_received_data(self, data: bytes) -> None:
+        """수신된 데이터를 처리합니다."""
+        if self.protocol:
+            self.protocol.receiveData(data)
+            self.protocol.processReceivedData()
+        self.data_received.emit(data)
+        # RX LED 표시
+        if self.main_window:
+            self.main_window.indicate_rx()
+    
+    def get_protocol(self) -> Optional[ComProtocol]:
+        """현재 ComProtocol 인스턴스를 반환합니다."""
+        return self.protocol
+    
+    def is_port_connected(self) -> bool:
+        """현재 포트 연결 상태를 반환합니다."""
+        return self.is_connected
+    
+    def get_current_port(self) -> Optional[str]:
+        """현재 연결된 포트 이름을 반환합니다."""
+        if self.serial_port and self.serial_port.is_open:
+            return self.serial_port.port
+        return None
+
+    @Slot(bytes)
+    def _handle_data_sent(self, data: bytes) -> None:
+        """ComProtocol에서 데이터가 전송되었을 때 호출되는 핸들러"""
+        # TX LED 표시
+        if self.main_window:
+            self.main_window.indicate_tx() 
+
+    def send_sync_packet(self, receiverId: int = None, senderId: int = None) -> bool:
+        """
+        상태 동기화를 위한 sync 패킷을 전송합니다.
+        
+        Args:
+            receiverId (int, optional): 수신자 ID. 
+                                      기본값은 DEFAULT_DEVICE_ID (0x0001)
+            senderId (int, optional): 송신자 ID. 
+                                    기본값은 DEFAULT_HOST_ID (0x0000)
+            
+        Returns:
+            bool: 전송 성공 여부
+        """
+        if not self.is_port_connected() or not self.protocol:
+            self.error_occurred.emit("포트가 연결되지 않았습니다")
+            return False
+            
+        try:
+            # 기본값 설정
+            if receiverId is None:
+                receiverId = self.DEFAULT_DEVICE_ID
+            if senderId is None:
+                senderId = self.DEFAULT_HOST_ID
+                
+            # ComProtocol의 sync 패킷 전송 메서드 호출
+            self.protocol.send_sync_packet(receiverId, senderId)
+            return True
+            
+        except Exception as e:
+            error_msg = f"Sync 패킷 전송 실패: {str(e)}"
+            self.error_occurred.emit(error_msg)
+            return False 
+
+    def get_reader_thread(self) -> Optional['SerialReaderThread']:
+        """현재 실행 중인 SerialReaderThread 인스턴스를 반환합니다."""
+        # 단순히 reader_thread 반환 (연결 상태와 관계없이)
+        return self.reader_thread
+
+    def _handle_connection_lost(self):
+        """연결 끊김 처리"""
+        if not self._error_dialog_shown:
+            self.error_occurred.emit("시리얼 포트 연결이 끊어졌습니다.")
+            self._error_dialog_shown = False
+            self.disconnect_port()
+
     def _handle_received_data(self, data: bytes) -> None:
         """수신된 데이터를 처리합니다."""
         if self.protocol:
