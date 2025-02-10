@@ -44,8 +44,8 @@ class SerialManager(QObject):
         self.main_window = None  # MainWindow 참조를 저장할 속성 추가
         self._error_dialog_shown = False  # 에러 다이얼로그 표시 상태 추적
         self._send_lock = Lock()  # 전송 뮤텍스 추가
-        self._write_timeout = 1.0  # 쓰기 타임아웃을 1초로 증가
-        self._max_retries = 3  # 최대 재시도 횟수
+        self._write_timeout = 1.0  # 제어 명령용 타임아웃 1초
+        self._max_retries = 3  # 제어 명령 최대 재시도 횟수
         self._retry_delay = 0.05  # 재시도 간격 (50ms)
         
     def set_main_window(self, window):
@@ -113,43 +113,36 @@ class SerialManager(QObject):
             self.error_occurred.emit(f"연결 해제 실패: {str(e)}")
     
     def send_packet(self, receiverId: int, senderId: int, cmd: int, data: bytes) -> bool:
-        """
-        시리얼 포트로 패킷을 전송합니다.
-        재시도 로직이 포함되어 있습니다.
-        """
+        """시리얼 포트로 패킷을 전송합니다."""
         if not self.is_port_connected() or not self.protocol:
             return False
         
+        # SYNC 패킷은 실패해도 재시도하지 않음
+        if cmd == ComProtocol.CMD_STATUS_SYNC:
+            try:
+                with self._send_lock:
+                    self.protocol.sendData(receiverId, senderId, cmd, data)
+                    return True
+            except:
+                return False
+        
+        # 제어 명령은 재시도 로직 적용
         retries = 0
         while retries < self._max_retries:
             try:
-                with self._send_lock:  # 뮤텍스로 보호된 전송
-                    # SYNC 패킷이 아닌 경우 우선순위를 높임
-                    if cmd != ComProtocol.CMD_STATUS_SYNC:
-                        # 현재 write_timeout 저장
-                        original_timeout = self.serial_port.write_timeout
-                        try:
-                            # 제어 패킷은 더 긴 타임아웃 사용
-                            self.serial_port.write_timeout = self._write_timeout
-                            self.protocol.sendData(receiverId, senderId, cmd, data)
-                            return True
-                        finally:
-                            # 원래 타임아웃으로 복원
-                            self.serial_port.write_timeout = original_timeout
-                    else:
-                        # SYNC 패킷은 기존 타임아웃 사용
-                        self.protocol.sendData(receiverId, senderId, cmd, data)
-                        return True
+                with self._send_lock:
+                    self.protocol.sendData(receiverId, senderId, cmd, data)
+                    return True
                     
             except serial.SerialTimeoutException:
-                print(f"시리얼 쓰기 타임아웃 발생 (재시도 {retries + 1}/{self._max_retries})")
+                print(f"제어 명령 전송 타임아웃 (재시도 {retries + 1}/{self._max_retries})")
                 retries += 1
                 if retries < self._max_retries:
-                    time.sleep(self._retry_delay)  # 재시도 전 대기
+                    time.sleep(self._retry_delay)
                 continue
                 
             except Exception as e:
-                print(f"패킷 전송 실패: {str(e)}")
+                print(f"제어 명령 전송 실패: {str(e)}")
                 return False
                 
         return False  # 모든 재시도 실패

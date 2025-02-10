@@ -23,8 +23,6 @@ class SerialReaderThread(QThread):
         self._last_sync_time = 0
         self._error_reported = False
         self._sync_lock = Lock()
-        self._write_timeout = 0.1  # sync 전송 타임아웃 (100ms)
-        self._sync_retry_delay = 0.02  # sync 재시도 간격 (20ms)
 
     def run(self):
         while self._running:
@@ -35,13 +33,23 @@ class SerialReaderThread(QThread):
                         self._error_reported = True
                     break
 
-                # 먼저 데이터 수신 처리 (우선순위 높임)
-                bytes_waiting = self.serial_port.in_waiting
-                if bytes_waiting:
-                    data = self.serial_port.read(bytes_waiting)
-                    self.data_received.emit(data)
+                # 먼저 데이터 수신 처리
+                try:
+                    bytes_waiting = self.serial_port.in_waiting
+                    if bytes_waiting:
+                        data = self.serial_port.read(bytes_waiting)
+                        self.data_received.emit(data)
+                except serial.SerialTimeoutException:
+                    # 타임아웃은 무시
+                    pass
+                except serial.SerialException as e:
+                    # 실제 연결 문제는 상위로 전파
+                    raise e
+                except:
+                    # 기타 예외는 무시
+                    pass
 
-                # Sync 패킷 전송 처리
+                # Sync 패킷 전송 처리 - 실패시 무시
                 if self._sync_enabled:
                     current_time = time.time() * 1000
                     if current_time - self._last_sync_time >= self._sync_interval:
@@ -49,32 +57,34 @@ class SerialReaderThread(QThread):
                             with self._sync_lock:
                                 serial_manager = self.parent()
                                 if serial_manager and serial_manager.protocol:
-                                    # SYNC 패킷 전송 시도
-                                    try:
-                                        serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
-                                        self._last_sync_time = current_time
-                                    except serial.SerialTimeoutException:
-                                        print("Sync 전송 타임아웃, 잠시 후 재시도")
-                                        # 짧은 대기 후 한 번 더 시도
-                                        time.sleep(self._sync_retry_delay)
-                                        try:
-                                            serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
-                                            self._last_sync_time = current_time
-                                        except:
-                                            # 두 번째 시도도 실패하면 다음 주기로
-                                            self._last_sync_time = current_time
-                                            pass
-
-                        except Exception as e:
-                            print(f"Sync 전송 중 오류 발생: {str(e)}")
+                                    serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
+                        except serial.SerialTimeoutException:
+                            # 타임아웃은 무시
+                            pass
+                        except serial.SerialException as e:
+                            # 실제 연결 문제인 경우만 상위로 전파
+                            if "disconnected" in str(e).lower() or "access denied" in str(e).lower():
+                                raise e
+                        except:
+                            # 기타 예외는 무시
+                            pass
+                        finally:
                             self._last_sync_time = current_time
 
-            except (serial.SerialException) as e:
-                if not self._error_reported:
-                    self.error_occurred.emit("시리얼 포트 연결이 끊어졌습니다.")
-                    self.connection_lost.emit()
-                    self._error_reported = True
-                break
+            except serial.SerialException as e:
+                # 실제 연결 끊김 상황만 처리
+                if "disconnected" in str(e).lower() or "access denied" in str(e).lower():
+                    if not self._error_reported:
+                        self.error_occurred.emit("시리얼 포트 연결이 끊어졌습니다.")
+                        self.connection_lost.emit()
+                        self._error_reported = True
+                    break
+                else:
+                    # 다른 시리얼 예외는 무시하고 계속 진행
+                    continue
+            except Exception as e:
+                print(f"예상치 못한 예외 발생: {str(e)}")
+                continue
             
             self.msleep(1)
 
@@ -101,6 +111,7 @@ class SerialReaderThread(QThread):
         self._sync_enabled = enabled
         if enabled:
             self._last_sync_time = 0  # 즉시 첫 전송이 이루어지도록 초기화
+            self._error_reported = False  # 에러 상태 초기화
 
     def set_sync_interval(self, interval_ms: int):
         """Sync 패킷 전송 주기 설정"""
