@@ -33,8 +33,8 @@ class ComProtocol(QObject):
     CMD_MAIN_POWER_CONTROL = 0x0100
     CMD_MAIN_POWER_CONTROL_ACK = CMD_MAIN_POWER_CONTROL | CMD_ACK_BIT
 
-    CMD_SYNC = 0x0020
-    CMD_SYNC_ACK = CMD_SYNC | CMD_ACK_BIT
+    CMD_SESSION_SYNC = 0x0020
+    CMD_SESSION_SYNC_ACK = CMD_SESSION_SYNC | CMD_ACK_BIT
 
     MAX_RETRY_COUNT = 5
     MAX_FILENAME_LENGTH = 256
@@ -179,7 +179,7 @@ class ComProtocol(QObject):
         packet = self.buildPacket(receiverId, senderId, cmd, data)
         result = self.serial.write(packet)
 
-        print(f"[TX] Sequence: {self.currentSequenceNumber-1}, CMD: 0x{cmd:04X}")  # 현재 전송된 패킷의 시퀀스 번호
+        #print(f"[TX] Sequence: {self.currentSequenceNumber-1}, CMD: 0x{cmd:04X}")  # 현재 전송된 패킷의 시퀀스 번호
         
         if result > 0:
             self.data_sent.emit(packet)
@@ -239,14 +239,14 @@ class ComProtocol(QObject):
             seq = struct.unpack('>H', packet[offset:offset + 2])[0]
             offset += 2
             
-            print(f"[RX] Received Sequence: {seq}, CMD: 0x{cmd:04X}")  # 수신된 패킷의 시퀀스 번호
+            #print(f"[RX] Received Sequence: {seq}, CMD: 0x{cmd:04X}")  # 수신된 패킷의 시퀀스 번호
 
             # payload 길이 계산
             payload_length = packet_length - 10
             payload = packet[offset:offset + payload_length]
             offset += payload_length
 
-            if cmd == ComProtocol.CMD_SYNC:
+            if cmd == ComProtocol.CMD_SESSION_SYNC:
                 if len(payload) >= 6:
                     authToken = struct.unpack('>H', payload[4:6])[0]
                     if authToken == 0xABCD:
@@ -416,7 +416,7 @@ class ComProtocol(QObject):
             self.handleStatusSyncAck(senderId, payload)
         elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
             self.handleMainPowerControlAck(senderId, payload)
-        elif cmd == ComProtocol.CMD_SYNC:
+        elif cmd == ComProtocol.CMD_SESSION_SYNC:
             if len(payload) >= 6:
                 timestamp = struct.unpack('>I', payload[0:4])[0]
                 authToken = struct.unpack('>H', payload[4:6])[0]
@@ -425,7 +425,7 @@ class ComProtocol(QObject):
                     print("동기화 성공: 시퀀스 번호 초기화")
             else:
                 print("잘못된 동기화 패킷")
-        elif cmd == ComProtocol.CMD_SYNC_ACK:
+        elif cmd == ComProtocol.CMD_SESSION_SYNC_ACK:
             if self.waiting_for_sync:
                 self.sync_timer.stop()
                 self.waiting_for_sync = False
@@ -493,13 +493,22 @@ class ComProtocol(QObject):
         """
         self.sendFileAck(receiverId, stage, success, data)
 
-    def send_sync_packet(self, receiverId: int, senderId: int) -> None:
+    def send_session_sync_packet(self, receiverId: int, senderId: int) -> None:
         """
-        동기화를 위한 sync 패킷 전송
+        세션 동기화를 위한 sync 패킷 전송
         """
         timestamp = int(time.time())
         payload = struct.pack('>I', timestamp) + struct.pack('>H', 0xABCD)
-        self.sendData(receiverId, senderId, ComProtocol.CMD_SYNC, payload)
+        self.sendData(receiverId, senderId, ComProtocol.CMD_SESSION_SYNC, payload)
+
+    def send_sync_packet(self, receiverId: int, senderId: int) -> None:
+        """
+        동기화 패킷 전송 (페이로드 없음)
+        Args:
+            receiverId (int): 수신자 ID
+            senderId (int): 송신자 ID
+        """
+        self.sendData(receiverId, senderId, ComProtocol.CMD_STATUS_SYNC, b'')
 
     def start_sync_session(self):
         """새 세션 동기화 시작"""
@@ -523,7 +532,7 @@ class ComProtocol(QObject):
             self.sync_failed.emit()
             return
 
-        self.send_sync_packet(0, 0)  # receiverId와 senderId는 적절히 수정
+        self.send_session_sync_packet(0, 0)  # receiverId와 senderId는 적절히 수정
         self.sync_retry_count += 1
 
     def cleanup_sync(self):

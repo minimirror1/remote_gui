@@ -23,6 +23,10 @@ class SerialReaderThread(QThread):
         self._last_sync_time = 0
         self._error_reported = False
         self._sync_lock = Lock()
+        
+        # parent 객체 유효성 검증 추가
+        if parent is None or not hasattr(parent, 'protocol'):
+            raise ValueError("Invalid parent object")
 
     def run(self):
         while self._running:
@@ -52,21 +56,25 @@ class SerialReaderThread(QThread):
                 # Sync 패킷 전송 처리 - 실패시 무시
                 if self._sync_enabled:
                     current_time = time.time() * 1000
+                    #print(f"Current time: {current_time}, Last sync: {self._last_sync_time}, Interval: {self._sync_interval}")
                     if current_time - self._last_sync_time >= self._sync_interval:
                         try:
                             with self._sync_lock:
                                 serial_manager = self.parent()
+                                #print(f"Serial manager: {serial_manager}, Protocol: {serial_manager.protocol if serial_manager else None}")
                                 if serial_manager and serial_manager.protocol:
+                                    #print("Attempting to send sync packet...")
                                     serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
-                        except serial.SerialTimeoutException:
-                            # 타임아웃은 무시
+                                    #print("Sync packet sent successfully")
+                        except serial.SerialTimeoutException as e:
+                            #print(f"Timeout error: {str(e)}")
                             pass
                         except serial.SerialException as e:
-                            # 실제 연결 문제인 경우만 상위로 전파
+                            #print(f"Serial error: {str(e)}")
                             if "disconnected" in str(e).lower() or "access denied" in str(e).lower():
                                 raise e
-                        except:
-                            # 기타 예외는 무시
+                        except Exception as e:
+                            #print(f"Unexpected error during sync: {str(e)}")
                             pass
                         finally:
                             self._last_sync_time = current_time
@@ -83,7 +91,7 @@ class SerialReaderThread(QThread):
                     # 다른 시리얼 예외는 무시하고 계속 진행
                     continue
             except Exception as e:
-                print(f"예상치 못한 예외 발생: {str(e)}")
+                #print(f"예상치 못한 예외 발생: {str(e)}")
                 continue
             
             self.msleep(1)
