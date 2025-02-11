@@ -221,12 +221,15 @@ class ComProtocol(QObject):
             packet_length = struct.unpack('>H', length_bytes)[0]
             total_packet_length = ComProtocol.START_SEQUENCE_LENGTH + packet_length
 
+            print(f"packet_length: {packet_length}, total_packet_length: {total_packet_length}")
+
             if len(self.receiveBuffer) < total_packet_length + ComProtocol.CRC_LENGTH:
                 break  # 전체 패킷 수신 전
 
             # 패킷 추출
             packet = self.receiveBuffer[:total_packet_length + ComProtocol.CRC_LENGTH]
-            del self.receiveBuffer[:total_packet_length]
+            #del self.receiveBuffer[:total_packet_length + ComProtocol.CRC_LENGTH]  # CRC 길이를 포함하여 삭제
+            del self.receiveBuffer[:]
 
             # 패킷 파싱
             offset = ComProtocol.START_SEQUENCE_LENGTH + 2

@@ -46,7 +46,7 @@ class SerialManager(QObject):
         self._send_lock = Lock()  # 전송 뮤텍스 추가
         self._write_timeout = 1.0  # 제어 명령용 타임아웃 1초
         self._max_retries = 3  # 제어 명령 최대 재시도 횟수
-        self._retry_delay = 0.05  # 재시도 간격 (50ms)
+        self._retry_delay = 0.15  # 재시도 간격 (150ms)
         
     def set_main_window(self, window):
         """MainWindow 인스턴스 참조를 설정합니다."""
