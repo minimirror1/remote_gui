@@ -3,6 +3,7 @@ from PySide6.QtGui import QPixmap
 from src.ui.home_page_ui import Ui_HomePage
 from src.widgets.serial_commands import SerialCommands
 import _icons_rc   
+from PySide6.QtCore import QTimer
 
 
 class HomePage(QWidget):
@@ -23,6 +24,13 @@ class HomePage(QWidget):
         # 시그널 연결 상태 추적
         self._power_status_connected = False
         self._current_protocol = None
+        
+        # 전원 버튼 관련 변수 추가
+        self._power_cooldown_timer = QTimer(self)
+        self._power_cooldown_timer.setInterval(1000)  # 1초 간격
+        self._power_cooldown_timer.timeout.connect(self._update_power_cooldown)
+        self._power_cooldown_count = 0
+        self._power_button_enabled = True
         
         # 초기 설정
         self.setup_ui()
@@ -87,6 +95,9 @@ class HomePage(QWidget):
         
     def on_main_power_clicked(self):
         """메인 전원 버튼 클릭 핸들러"""
+        if not self._power_button_enabled:
+            return  # 쿨다운 중이면 동작하지 않음
+        
         success = self.serial_commands.send_main_power_control(self.ui.MainPowerButton.isChecked())
         
         if not success:
@@ -96,13 +107,35 @@ class HomePage(QWidget):
             else:
                 QMessageBox.critical(self, "오류", "메인 전원 제어 실패")
             self.ui.MainPowerButton.setChecked(not self.ui.MainPowerButton.isChecked())
+        else:
+            # 성공 시 쿨다운 시작
+            self._power_button_enabled = False
+            self._power_cooldown_count = 3  # 3초 카운트다운
+            self.ui.MainPowerButton.setEnabled(False)  # 버튼 비활성화
+            self.ui.mainPowerCountDownLabel.setText(f"대기시간: {self._power_cooldown_count}초")
+            self._power_cooldown_timer.start()
     
+    def _update_power_cooldown(self):
+        """전원 버튼 쿨다운 타이머 업데이트"""
+        self._power_cooldown_count -= 1
+        
+        if self._power_cooldown_count <= 0:
+            # 쿨다운 종료
+            self._power_cooldown_timer.stop()
+            self._power_button_enabled = True
+            self.ui.MainPowerButton.setEnabled(True)
+            self.ui.mainPowerCountDownLabel.setText("")
+        else:
+            # 카운트다운 표시 업데이트
+            self.ui.mainPowerCountDownLabel.setText(f"대기시간: {self._power_cooldown_count}초")
+
     def update_power_status(self, is_on: bool):
         """전원 상태에 따라 LED 이미지 업데이트"""
-        print(f"전원 상태 업데이트: {'켜짐' if is_on else '꺼짐'}")  # 디버깅용
+        print(f"전원 상태 업데이트: {'켜짐' if is_on else '꺼짐'}")
         self.ui.MainPowerIndicator.setPixmap(self.led_on if is_on else self.led_off)
-        # 버튼 상태도 동기화
-        self.ui.MainPowerButton.setChecked(is_on)
+        # 버튼 상태 동기화 (쿨다운 중이 아닐 때만)
+        if self._power_button_enabled:
+            self.ui.MainPowerButton.setChecked(is_on)
 
     def update_status_info(self, status_data: dict):
         """상태 정보 업데이트"""

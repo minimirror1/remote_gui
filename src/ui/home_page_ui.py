@@ -186,6 +186,13 @@ class Ui_HomePage(object):
 
         self.horizontalLayout_6.addWidget(self.MainPowerIndicator)
 
+        self.mainPowerCountDownLabel = QLabel(self.frame_7)
+        self.mainPowerCountDownLabel.setObjectName(u"mainPowerCountDownLabel")
+        self.mainPowerCountDownLabel.setMaximumSize(QSize(100, 16777215))
+        self.mainPowerCountDownLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.horizontalLayout_6.addWidget(self.mainPowerCountDownLabel)
+
 
         self.verticalLayout_3.addWidget(self.frame_7)
 
@@ -223,5 +230,6 @@ class Ui_HomePage(object):
         self.label_9.setText(QCoreApplication.translate("HomePage", u"\uba54\uc778 \uc804\uc6d0", None))
         self.MainPowerButton.setText("")
         self.MainPowerIndicator.setText("")
+        self.mainPowerCountDownLabel.setText("")
     # retranslateUi
 
