@@ -87,8 +87,12 @@ class SettingPage(QWidget, Ui_SettingPage):
                 break
         
         if selected_port:
-            self.serial_manager.connect_to_port(selected_port)
-    
+            if self.serial_manager.connect_to_port(selected_port):
+                # 연결 성공 시 동기화 시작
+                self.protocol = self.serial_manager.get_protocol()
+                if self.protocol:
+                    self.on_port_connected()
+
     @Slot(bool)
     def _update_connection_status(self, is_connected: bool):
         """연결 상태에 따라 UI 업데이트"""
@@ -106,6 +110,16 @@ class SettingPage(QWidget, Ui_SettingPage):
                 reader_thread.set_sync_interval(self.sync_ms_spinBox.value())
         else:
             self.sync_enable.setChecked(False)
+            # 연결 해제 시 동기화 정리
+            if hasattr(self, 'protocol') and self.protocol:
+                self.protocol.cleanup_sync()
+                try:
+                    if self.protocol.sync_success.receivers(self.on_sync_success) > 0:
+                        self.protocol.sync_success.disconnect(self.on_sync_success)
+                    if self.protocol.sync_failed.receivers(self.on_sync_failed) > 0:
+                        self.protocol.sync_failed.disconnect(self.on_sync_failed)
+                except:
+                    pass
     
     @Slot(str)
     def _show_error(self, error_message: str):
@@ -157,3 +171,41 @@ class SettingPage(QWidget, Ui_SettingPage):
         """페이지가 숨겨질 때 호출"""
         super().hideEvent(event)
         # 페이지가 숨겨질 때는 sync 상태를 유지합니다
+
+    def on_port_connected(self):
+        """포트 연결 성공 후 호출되는 함수"""
+        print("포트 연결 성공: 동기화 시작")
+        
+        # 이전 연결이 있다면 정리 - disconnect 전에 연결 여부 확인
+        if hasattr(self, 'protocol') and self.protocol:
+            try:
+                if self.protocol.sync_success.receivers(self.on_sync_success) > 0:
+                    self.protocol.sync_success.disconnect(self.on_sync_success)
+                if self.protocol.sync_failed.receivers(self.on_sync_failed) > 0:
+                    self.protocol.sync_failed.disconnect(self.on_sync_failed)
+            except:
+                pass
+
+        # 새로운 연결 설정
+        self.protocol.sync_success.connect(self.on_sync_success)
+        self.protocol.sync_failed.connect(self.on_sync_failed)
+        self.protocol.start_sync_session()
+
+    def on_sync_success(self):
+        """동기화 성공 처리"""
+        self.protocol.sync_success.disconnect(self.on_sync_success)
+        self.protocol.sync_failed.disconnect(self.on_sync_failed)
+        # 성공 후 추가 작업...
+
+    def on_sync_failed(self):
+        """동기화 실패 처리"""
+        self.protocol.sync_success.disconnect(self.on_sync_success)
+        self.protocol.sync_failed.disconnect(self.on_sync_failed)
+        
+        from PySide6.QtWidgets import QMessageBox
+        QMessageBox.critical(
+            self,
+            "연결 실패",
+            "장치와의 동기화에 실패했습니다.\n장치 연결 상태를 확인해주세요.",
+            QMessageBox.Ok
+        )

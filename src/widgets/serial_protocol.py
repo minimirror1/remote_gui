@@ -16,6 +16,8 @@ class ComProtocol(QObject):
     data_sent = Signal(bytes)  # 데이터 전송 시그널 추가
     main_power_status_changed = Signal(bool)  # 전원 상태 변경 시그널 추가
     status_sync_changed = Signal(dict)  # 시간, 카운트, 전압/전류 정보를 딕셔너리로 전달
+    sync_success = Signal()  # 동기화 성공 시그널
+    sync_failed = Signal()   # 동기화 실패 시그널
 
     # 명령어 및 상수 정의
     CMD_ACK_BIT = 0x8000
@@ -30,6 +32,9 @@ class ComProtocol(QObject):
 
     CMD_MAIN_POWER_CONTROL = 0x0100
     CMD_MAIN_POWER_CONTROL_ACK = CMD_MAIN_POWER_CONTROL | CMD_ACK_BIT
+
+    CMD_SYNC = 0x0020
+    CMD_SYNC_ACK = CMD_SYNC | CMD_ACK_BIT
 
     MAX_RETRY_COUNT = 5
     MAX_FILENAME_LENGTH = 256
@@ -125,48 +130,59 @@ class ComProtocol(QObject):
 
         self.fileContext = ComProtocol.FileTransferContext()
 
+        # 시퀀스 번호 관련 변수 추가
+        self.currentSequenceNumber = 0
+        self.expectedSequenceNumber = 0
+        self.missingPacketCount = 0
+        self.SEQUENCE_JUMP_THRESHOLD = 3
+
+        # sync 관련 변수 추가
+        self.sync_retry_count = 0
+        self.sync_timer = None
+        self.MAX_SYNC_RETRIES = 3
+        self.SYNC_INTERVAL = 500  # ms
+        self.waiting_for_sync = False
+
     def buildPacket(self, receiverId, senderId, cmd, data):
-        """
-        데이터를 패킷으로 구성하여 반환한다.
-        :param receiverId: 수신자 ID (uint16)
-        :param senderId: 송신자 ID (uint16)
-        :param cmd: 명령어 (uint16)
-        :param data: payload (bytes-like object)
-        :return: 구성된 패킷 (bytes)
-        """
         packet = bytearray()
 
-        # 시작 마커 시퀀스 추가
+        # 시작 마커 추가
         for _ in range(ComProtocol.START_SEQUENCE_LENGTH):
             packet.append(ComProtocol.START_MARKER)
 
-        # 패킷 구성: [길이(2바이트), receiverId(2바이트), senderId(2바이트), cmd(2바이트), payload, CRC(2바이트)]
-        length = 2 + 2 + 2 + len(data) + 2
+        # 총 길이 = header(8) + payload + CRC(2)
+        length = 8 + len(data) + 2
         packet.extend(struct.pack('>H', length))
+        
+        # 헤더에 시퀀스 번호 추가
         packet.extend(struct.pack('>H', receiverId))
         packet.extend(struct.pack('>H', senderId))
         packet.extend(struct.pack('>H', cmd))
+        packet.extend(struct.pack('>H', self.currentSequenceNumber))
         packet.extend(data)
 
-        # CRC 계산
-        crc = self.calculateCRC16(packet[ComProtocol.START_SEQUENCE_LENGTH + 2:], 
-                                  len(packet) - ComProtocol.START_SEQUENCE_LENGTH - 2)
+        # CRC 계산 및 추가
+        crc_start = ComProtocol.START_SEQUENCE_LENGTH + 2
+        crc_data = packet[crc_start:crc_start + 8 + len(data)]
+        crc = self.calculateCRC16(crc_data, len(crc_data))
         packet.extend(struct.pack('>H', crc))
+
+        # 시퀀스 번호 증가
+        self.currentSequenceNumber = (self.currentSequenceNumber + 1) & 0xFFFF
 
         return packet
 
     def sendData(self, receiverId, senderId, cmd, data):
         """
         데이터를 패킷으로 구성하여 시리얼 인터페이스로 전송한다.
-        :param receiverId: 수신자 ID (uint16)
-        :param senderId: 송신자 ID (uint16)
-        :param cmd: 명령어 (uint16)
-        :param data: payload (bytes-like object)
         """
         packet = self.buildPacket(receiverId, senderId, cmd, data)
         result = self.serial.write(packet)
+
+        print(f"[TX] Sequence: {self.currentSequenceNumber-1}, CMD: 0x{cmd:04X}")  # 현재 전송된 패킷의 시퀀스 번호
+        
         if result > 0:
-            self.data_sent.emit(packet)  # 전송 성공 시 시그널 발생
+            self.data_sent.emit(packet)
         return result
 
     def receiveData(self, data):
@@ -213,17 +229,45 @@ class ComProtocol(QObject):
             del self.receiveBuffer[:total_packet_length]
 
             # 패킷 파싱
-            offset = ComProtocol.START_SEQUENCE_LENGTH + 2  # 시작 마커와 길이 필드 건너뜀
+            offset = ComProtocol.START_SEQUENCE_LENGTH + 2
             receiverId = struct.unpack('>H', packet[offset:offset + 2])[0]
             offset += 2
             senderId = struct.unpack('>H', packet[offset:offset + 2])[0]
             offset += 2
             cmd = struct.unpack('>H', packet[offset:offset + 2])[0]
             offset += 2
-            # payload 길이 = 전체 패킷 길이 - (receiverId(2) + senderId(2) + cmd(2) + CRC(2))
-            payload_length = packet_length - 8
+            seq = struct.unpack('>H', packet[offset:offset + 2])[0]
+            offset += 2
+            
+            print(f"[RX] Received Sequence: {seq}, CMD: 0x{cmd:04X}")  # 수신된 패킷의 시퀀스 번호
+
+            # payload 길이 계산
+            payload_length = packet_length - 10
             payload = packet[offset:offset + payload_length]
             offset += payload_length
+
+            if cmd == ComProtocol.CMD_SYNC:
+                if len(payload) >= 6:
+                    authToken = struct.unpack('>H', payload[4:6])[0]
+                    if authToken == 0xABCD:
+                        # print(f"[SYNC] Resetting sequence number (current: {self.expectedSequenceNumber} -> 0)")
+                        self.expectedSequenceNumber = 0
+            else:
+                diff = (seq - self.expectedSequenceNumber) & 0xFFFF
+                if diff == 0:
+                    # print(f"[SEQ] Sequence match: {seq}")
+                    self.expectedSequenceNumber = (self.expectedSequenceNumber + 1) & 0xFFFF
+                elif diff > 0 and diff <= self.SEQUENCE_JUMP_THRESHOLD:
+                    # print(f"[SEQ] Missing {diff} packets")
+                    self.missingPacketCount += diff
+                    self.expectedSequenceNumber = (seq + 1) & 0xFFFF
+                elif diff > 0:
+                    # print(f"[SEQ] Large sequence jump: {diff} packets")
+                    self.missingPacketCount += diff
+                    self.expectedSequenceNumber = (seq + 1) & 0xFFFF
+                else:
+                    # print(f"[SEQ] Old sequence number received: {seq}")
+                    continue
 
             # CRC 검증을 위한 데이터 준비
             crc_start = ComProtocol.START_SEQUENCE_LENGTH +2
@@ -372,7 +416,21 @@ class ComProtocol(QObject):
             self.handleStatusSyncAck(senderId, payload)
         elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
             self.handleMainPowerControlAck(senderId, payload)
-
+        elif cmd == ComProtocol.CMD_SYNC:
+            if len(payload) >= 6:
+                timestamp = struct.unpack('>I', payload[0:4])[0]
+                authToken = struct.unpack('>H', payload[4:6])[0]
+                if authToken == 0xABCD:
+                    self.expectedSequenceNumber = 0
+                    print("동기화 성공: 시퀀스 번호 초기화")
+            else:
+                print("잘못된 동기화 패킷")
+        elif cmd == ComProtocol.CMD_SYNC_ACK:
+            if self.waiting_for_sync:
+                self.sync_timer.stop()
+                self.waiting_for_sync = False
+                self.sync_success.emit()
+                print("동기화 성공")
         else:
             self.handleUnknownCommand(cmd)
 
@@ -437,18 +495,43 @@ class ComProtocol(QObject):
 
     def send_sync_packet(self, receiverId: int, senderId: int) -> None:
         """
-        상태 동기화를 위한 sync 패킷을 전송합니다.
-        
-        Args:
-            receiverId (int): 수신자 ID
-            senderId (int): 송신자 ID
+        동기화를 위한 sync 패킷 전송
         """
-        self.sendData(
-            receiverId=receiverId,
-            senderId=senderId,
-            cmd=self.CMD_STATUS_SYNC,
-            data=bytes()
-        )
+        timestamp = int(time.time())
+        payload = struct.pack('>I', timestamp) + struct.pack('>H', 0xABCD)
+        self.sendData(receiverId, senderId, ComProtocol.CMD_SYNC, payload)
+
+    def start_sync_session(self):
+        """새 세션 동기화 시작"""
+        self.sync_retry_count = 0
+        self.waiting_for_sync = True
+        
+        # QTimer 설정
+        if self.sync_timer is None:
+            from PySide6.QtCore import QTimer
+            self.sync_timer = QTimer()
+            self.sync_timer.timeout.connect(self._try_sync)
+        
+        self.sync_timer.start(self.SYNC_INTERVAL)
+        self._try_sync()  # 첫 번째 시도 즉시 실행
+
+    def _try_sync(self):
+        """동기화 패킷 전송 시도"""
+        if self.sync_retry_count >= self.MAX_SYNC_RETRIES:
+            self.sync_timer.stop()
+            self.waiting_for_sync = False
+            self.sync_failed.emit()
+            return
+
+        self.send_sync_packet(0, 0)  # receiverId와 senderId는 적절히 수정
+        self.sync_retry_count += 1
+
+    def cleanup_sync(self):
+        """동기화 관련 자원 정리"""
+        if self.sync_timer:
+            self.sync_timer.stop()
+        self.waiting_for_sync = False
+        self.sync_retry_count = 0
 
 """
 # ======================================================================
