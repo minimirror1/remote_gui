@@ -197,10 +197,40 @@ class HomePage(QWidget):
         # 메인 전원 상태 업데이트
         main_power_status = status_data['main_power']['status']
         self.ui.MainPowerIndicator.setPixmap(self.led_on if main_power_status else self.led_off)
+        # 버튼 상태 동기화 (쿨다운 중이 아닐 때만)
+        if self._power_button_enabled:
+            self.ui.MainPowerButton.setChecked(main_power_status)
 
         # 모션 재생 상태 업데이트
-        #motion_play_status = status_data['motion']['status']
-        #self.ui.motionPlayStatusLabel.setText(motion_play_status)
+        motion_play_status = status_data['motion']['status']        
+        # 모션 재생 상태에 따른 버튼 활성화/비활성화
+        if motion_play_status == "PLAY_ONE" or motion_play_status == "PLAY_REPEAT":
+            # 재생 중일 때
+            self.ui.playButton.setEnabled(False)
+            self.ui.pauseButton.setEnabled(True) 
+            self.ui.stopButton.setEnabled(True)
+            self.ui.repeatButton.setEnabled(False)
+            # repeat 버튼 상태 동기화
+            self.ui.repeatButton.setChecked(motion_play_status == "PLAY_REPEAT")
+        elif motion_play_status == "PAUSE":
+            # 일시정지 상태일 때
+            self.ui.playButton.setEnabled(True)
+            self.ui.pauseButton.setEnabled(False)
+            self.ui.stopButton.setEnabled(True)
+            self.ui.repeatButton.setEnabled(True)
+        elif motion_play_status == "STOP":
+            # 정지 상태일 때
+            self.ui.playButton.setEnabled(True)
+            self.ui.pauseButton.setEnabled(False)
+            self.ui.stopButton.setEnabled(False)
+            self.ui.repeatButton.setEnabled(True)
+        else:  # "UNKNOWN" 등 기타 상태
+            self.ui.playButton.setEnabled(False)
+            self.ui.pauseButton.setEnabled(False)
+            self.ui.stopButton.setEnabled(False)
+            self.ui.repeatButton.setEnabled(False)
+
+        
 
         # 연속구동시간 업데이트 (00h00m00s 형식)
         time_info = status_data['time']

@@ -380,7 +380,9 @@ class ComProtocol(QObject):
                     'status': main_power_status
                 },
                 'motion': {
-                    'status': motion_play_status
+                    'status': motion_play_status,
+                    'current': motion_current,
+                    'end': motion_end
                 },
                 'time': {
                     'hours': hours,
@@ -394,10 +396,6 @@ class ComProtocol(QObject):
                 'power': {
                     'voltage': voltage,
                     'current': current
-                },
-                'motion': {
-                    'current': motion_current,
-                    'end': motion_end
                 }
             }
 
