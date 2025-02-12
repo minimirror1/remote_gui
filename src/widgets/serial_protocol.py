@@ -229,6 +229,7 @@ class ComProtocol(QObject):
             # 패킷 추출
             packet = self.receiveBuffer[:total_packet_length + ComProtocol.CRC_LENGTH]
             #del self.receiveBuffer[:total_packet_length + ComProtocol.CRC_LENGTH]  # CRC 길이를 포함하여 삭제
+            # 250212 버그 수정 : 버퍼 완전 비우기
             del self.receiveBuffer[:]
 
             # 패킷 파싱
