@@ -243,17 +243,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QFrame" name="frame_7">
-          <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Raised</enum>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_6"/>
-         </widget>
-        </item>
-        <item>
          <widget class="QFrame" name="frame_8">
           <property name="frameShape">
            <enum>QFrame::Shape::StyledPanel</enum>

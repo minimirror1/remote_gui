@@ -156,15 +156,6 @@ class Ui_HomePage(object):
 
         self.verticalLayout_3.addWidget(self.widget)
 
-        self.frame_7 = QFrame(self.frame_3)
-        self.frame_7.setObjectName(u"frame_7")
-        self.frame_7.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
-        self.horizontalLayout_6 = QHBoxLayout(self.frame_7)
-        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-
-        self.verticalLayout_3.addWidget(self.frame_7)
-
         self.frame_8 = QFrame(self.frame_3)
         self.frame_8.setObjectName(u"frame_8")
         self.frame_8.setFrameShape(QFrame.Shape.StyledPanel)
