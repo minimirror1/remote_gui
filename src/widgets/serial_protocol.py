@@ -337,7 +337,7 @@ class ComProtocol(QObject):
     
     def handleStatusSyncAck(self, senderId, payload):
         """상태 동기화 응답 처리"""
-        if len(payload) < 11:  # 페이로드 길이 체크
+        if len(payload) < 15:  # 페이로드 길이 체크 (기존 11바이트 + 모션시간 4바이트)
             return
 
         try:
@@ -354,6 +354,10 @@ class ComProtocol(QObject):
             voltage = struct.unpack('>H', payload[7:9])[0]
             current = struct.unpack('>H', payload[9:11])[0]
 
+            # 모션 시간 정보 파싱 추가
+            motion_current = struct.unpack('>H', payload[11:13])[0]
+            motion_end = struct.unpack('>H', payload[13:15])[0]
+
             # 데이터를 딕셔너리로 구성
             status_data = {
                 'time': {
@@ -368,6 +372,10 @@ class ComProtocol(QObject):
                 'power': {
                     'voltage': voltage,
                     'current': current
+                },
+                'motion': {
+                    'current': motion_current,
+                    'end': motion_end
                 }
             }
 

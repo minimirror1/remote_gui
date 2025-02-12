@@ -389,14 +389,14 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QLabel" name="playCurrentTimeLabel">
+               <widget class="QLabel" name="motionCurrentTimeLabel">
                 <property name="text">
                  <string>00:00:00</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QSlider" name="playTimeHorizontalSlider">
+               <widget class="QSlider" name="motionTimeHorizontalSlider">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -415,7 +415,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="playEndTimeLabel">
+               <widget class="QLabel" name="motionEndTimeLabel">
                 <property name="text">
                  <string>00:00:00</string>
                 </property>

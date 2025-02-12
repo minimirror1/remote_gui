@@ -228,23 +228,23 @@ class Ui_HomePage(object):
         self.horizontalLayout_8 = QHBoxLayout(self.widget_2)
         self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
         self.horizontalLayout_8.setContentsMargins(9, 0, 9, 0)
-        self.playCurrentTimeLabel = QLabel(self.widget_2)
-        self.playCurrentTimeLabel.setObjectName(u"playCurrentTimeLabel")
+        self.motionCurrentTimeLabel = QLabel(self.widget_2)
+        self.motionCurrentTimeLabel.setObjectName(u"motionCurrentTimeLabel")
 
-        self.horizontalLayout_8.addWidget(self.playCurrentTimeLabel)
+        self.horizontalLayout_8.addWidget(self.motionCurrentTimeLabel)
 
-        self.playTimeHorizontalSlider = QSlider(self.widget_2)
-        self.playTimeHorizontalSlider.setObjectName(u"playTimeHorizontalSlider")
-        self.playTimeHorizontalSlider.setMinimumSize(QSize(0, 0))
-        self.playTimeHorizontalSlider.setMaximumSize(QSize(300, 16777215))
-        self.playTimeHorizontalSlider.setOrientation(Qt.Orientation.Horizontal)
+        self.motionTimeHorizontalSlider = QSlider(self.widget_2)
+        self.motionTimeHorizontalSlider.setObjectName(u"motionTimeHorizontalSlider")
+        self.motionTimeHorizontalSlider.setMinimumSize(QSize(0, 0))
+        self.motionTimeHorizontalSlider.setMaximumSize(QSize(300, 16777215))
+        self.motionTimeHorizontalSlider.setOrientation(Qt.Orientation.Horizontal)
 
-        self.horizontalLayout_8.addWidget(self.playTimeHorizontalSlider)
+        self.horizontalLayout_8.addWidget(self.motionTimeHorizontalSlider)
 
-        self.playEndTimeLabel = QLabel(self.widget_2)
-        self.playEndTimeLabel.setObjectName(u"playEndTimeLabel")
+        self.motionEndTimeLabel = QLabel(self.widget_2)
+        self.motionEndTimeLabel.setObjectName(u"motionEndTimeLabel")
 
-        self.horizontalLayout_8.addWidget(self.playEndTimeLabel)
+        self.horizontalLayout_8.addWidget(self.motionEndTimeLabel)
 
 
         self.verticalLayout_4.addWidget(self.widget_2)
@@ -338,8 +338,8 @@ class Ui_HomePage(object):
         self.MainPowerButton.setText("")
         self.MainPowerIndicator.setText("")
         self.mainPowerCountDownLabel.setText("")
-        self.playCurrentTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
-        self.playEndTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
+        self.motionCurrentTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
+        self.motionEndTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
         self.playButton.setText("")
         self.pauseButton.setText("")
         self.stopButton.setText("")

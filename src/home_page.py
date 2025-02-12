@@ -175,6 +175,22 @@ class HomePage(QWidget):
         
         energy_text = f"{voltage:.1f}V / {current:.1f}A / {power:.1f}W"
         self.ui.energyLabel.setText(energy_text)
+        
+        # 모션 시간 정보 업데이트
+        motion_info = status_data.get('motion', {})
+        current_time = motion_info.get('current', 0) / 100.0  # 100으로 나누어 초 단위로 변환
+        end_time = motion_info.get('end', 0) / 100.0
+        
+        # 레이블 업데이트 (소수점 2자리까지 표시)
+        self.ui.motionCurrentTimeLabel.setText(f"{current_time:.2f}s")
+        self.ui.motionEndTimeLabel.setText(f"{end_time:.2f}s")
+        
+        # 슬라이더 업데이트
+        if end_time > 0:
+            progress = (current_time / end_time) * 100
+            self.ui.motionTimeHorizontalSlider.setValue(int(progress))
+        else:
+            self.ui.motionTimeHorizontalSlider.setValue(0)
 
     def on_play_clicked(self):
         """재생 버튼 클릭 처리"""
