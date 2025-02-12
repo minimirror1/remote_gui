@@ -193,6 +193,15 @@ class HomePage(QWidget):
 
     def update_status_info(self, status_data: dict):
         """상태 정보 업데이트"""
+
+        # 메인 전원 상태 업데이트
+        main_power_status = status_data['main_power']['status']
+        self.ui.MainPowerIndicator.setPixmap(self.led_on if main_power_status else self.led_off)
+
+        # 모션 재생 상태 업데이트
+        #motion_play_status = status_data['motion']['status']
+        #self.ui.motionPlayStatusLabel.setText(motion_play_status)
+
         # 연속구동시간 업데이트 (00h00m00s 형식)
         time_info = status_data['time']
         runtime_text = f"{time_info['hours']:02d}h{time_info['minutes']:02d}m{time_info['seconds']:02d}s"

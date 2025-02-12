@@ -10,6 +10,13 @@ class FileTransferStage(enum.Enum):
     RECEIVING_DATA = 3     # 데이터 수신 중
     VERIFY_CHECKSUM = 4    # 체크섬 검증
 
+class PlayControlState(enum.Enum):
+    """재생 제어 상태 정의"""
+    PLAY_ONE = 0x01    # 1회 재생
+    PLAY_REPEAT = 0x02 # 반복 재생
+    PAUSE = 0x03       # 일시 정지
+    STOP = 0x04        # 정지
+
 
 class ComProtocol(QObject):
     # 시그널 정의
@@ -341,25 +348,40 @@ class ComProtocol(QObject):
             return
 
         try:
+            # 상태 플레그 파싱
+            main_power_status = bool(payload[0])   
+            # PlayControlState 열거형으로 해석
+            try:
+                play_state = PlayControlState(payload[1])
+                motion_play_status = play_state.name  # 열거형 이름을 문자열로 변환 (예: "PLAY_ONE", "PLAY_REPEAT" 등)
+            except ValueError:
+                motion_play_status = "UNKNOWN"  # 알 수 없는 상태값인 경우            
+
             # 시간 정보 파싱
-            hours = payload[0]
-            minutes = payload[1]
-            seconds = payload[2]
+            hours = payload[2]
+            minutes = payload[3]
+            seconds = payload[4]
 
             # 동작 회차 정보 파싱
-            current_count = struct.unpack('>H', payload[3:5])[0]
-            total_count = struct.unpack('>H', payload[5:7])[0]
+            current_count = struct.unpack('>H', payload[5:7])[0]
+            total_count = struct.unpack('>H', payload[7:9])[0]
 
             # 에너지 정보 파싱
-            voltage = struct.unpack('>H', payload[7:9])[0]
-            current = struct.unpack('>H', payload[9:11])[0]
+            voltage = struct.unpack('>H', payload[9:11])[0]
+            current = struct.unpack('>H', payload[11:13])[0]
 
             # 모션 시간 정보 파싱 추가
-            motion_current = struct.unpack('>H', payload[11:13])[0]
-            motion_end = struct.unpack('>H', payload[13:15])[0]
+            motion_current = struct.unpack('>H', payload[13:15])[0]
+            motion_end = struct.unpack('>H', payload[15:17])[0]
 
             # 데이터를 딕셔너리로 구성
             status_data = {
+                'main_power': {
+                    'status': main_power_status
+                },
+                'motion': {
+                    'status': motion_play_status
+                },
                 'time': {
                     'hours': hours,
                     'minutes': minutes,
