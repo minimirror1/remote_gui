@@ -3,7 +3,7 @@ from PySide6.QtGui import QPixmap
 from src.ui.home_page_ui import Ui_HomePage
 from src.widgets.serial_commands import SerialCommands
 import _icons_rc   
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QDateTime
 
 
 class HomePage(QWidget):
@@ -37,6 +37,18 @@ class HomePage(QWidget):
         self._play_control_timer.setInterval(3000)  # 3초 타임아웃
         self._play_control_timer.timeout.connect(self._handle_play_control_timeout)
         self._waiting_play_control_ack = False
+        
+        # 모션 시간 UI 업데이트를 위한 타이머 추가
+        self._motion_update_timer = QTimer(self)
+        self._motion_update_timer.setInterval(50)  # 50ms 간격으로 업데이트
+        self._motion_update_timer.timeout.connect(self._update_motion_time_display)
+        self._motion_update_timer.start()
+        
+        # 모션 시간 관련 변수 (모두 ms 단위)
+        self._last_current_time = 0
+        self._last_end_time = 0
+        self._last_update_time = 0
+        self._display_current_time = 0
         
         # 초기 설정
         self.setup_ui()
@@ -155,6 +167,30 @@ class HomePage(QWidget):
         if self._power_button_enabled:
             self.ui.MainPowerButton.setChecked(is_on)
 
+    def _format_time_ms(self, time_ms):
+        """밀리초 값을 mm:ss:zzz 형식으로 변환"""
+        minutes = time_ms // 60000
+        seconds = (time_ms % 60000) // 1000
+        ms = time_ms % 1000
+        return f"{minutes:02d}:{seconds:02d}:{ms:03d}"
+
+    def _update_motion_time_display(self):
+        """모션 시간 표시 업데이트"""
+        if self._last_end_time > 0:
+            # 경과 시간 계산 (ms 단위)
+            elapsed = QDateTime.currentMSecsSinceEpoch() - self._last_update_time
+            
+            # 예상 현재 시간 계산 (ms 단위)
+            self._display_current_time = min(self._last_current_time + elapsed, self._last_end_time)
+            
+            # UI 업데이트
+            self.ui.motionCurrentTimeLabel.setText(self._format_time_ms(self._display_current_time))
+            self.ui.motionEndTimeLabel.setText(self._format_time_ms(self._last_end_time))
+            
+            # 진행률 업데이트
+            progress = (self._display_current_time / self._last_end_time) * 100
+            self.ui.motionTimeHorizontalSlider.setValue(int(progress))
+
     def update_status_info(self, status_data: dict):
         """상태 정보 업데이트"""
         # 연속구동시간 업데이트 (00h00m00s 형식)
@@ -176,14 +212,20 @@ class HomePage(QWidget):
         energy_text = f"{voltage:.1f}V / {current:.1f}A / {power:.1f}W"
         self.ui.energyLabel.setText(energy_text)
         
-        # 모션 시간 정보 업데이트
+        # 모션 시간 정보 업데이트 (이미 ms 단위로 수신)
         motion_info = status_data.get('motion', {})
-        current_time = motion_info.get('current', 0) / 100.0  # 100으로 나누어 초 단위로 변환
-        end_time = motion_info.get('end', 0) / 100.0
+        current_time = motion_info.get('current', 0)  # ms 단위
+        end_time = motion_info.get('end', 0)  # ms 단위
         
-        # 레이블 업데이트 (소수점 2자리까지 표시)
-        self.ui.motionCurrentTimeLabel.setText(f"{current_time:.2f}s")
-        self.ui.motionEndTimeLabel.setText(f"{end_time:.2f}s")
+        # 새로운 시간 값 저장
+        self._last_current_time = current_time
+        self._last_end_time = end_time
+        self._last_update_time = QDateTime.currentMSecsSinceEpoch()
+        self._display_current_time = current_time
+        
+        # 레이블 즉시 업데이트
+        self.ui.motionCurrentTimeLabel.setText(self._format_time_ms(current_time))
+        self.ui.motionEndTimeLabel.setText(self._format_time_ms(end_time))
         
         # 슬라이더 업데이트
         if end_time > 0:
