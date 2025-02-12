@@ -16,8 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QPushButton, QSizePolicy, QSlider, QVBoxLayout,
-    QWidget)
+    QPlainTextEdit, QPushButton, QSizePolicy, QSlider,
+    QVBoxLayout, QWidget)
 import _icons_rc
 
 class Ui_HomePage(object):
@@ -31,7 +31,7 @@ class Ui_HomePage(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.frame_2 = QFrame(HomePage)
         self.frame_2.setObjectName(u"frame_2")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.frame_2.sizePolicy().hasHeightForWidth())
@@ -300,13 +300,42 @@ class Ui_HomePage(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
+        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.frame_7 = QFrame(HomePage)
+        self.frame_7.setObjectName(u"frame_7")
+        sizePolicy.setHeightForWidth(self.frame_7.sizePolicy().hasHeightForWidth())
+        self.frame_7.setSizePolicy(sizePolicy)
+        self.frame_7.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
+
+        self.horizontalLayout_6.addWidget(self.frame_7)
+
         self.frame = QFrame(HomePage)
         self.frame.setObjectName(u"frame")
-        self.frame.setMaximumSize(QSize(16777215, 16777215))
+        sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
+        self.frame.setSizePolicy(sizePolicy)
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_5 = QVBoxLayout(self.frame)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.label_3 = QLabel(self.frame)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setMaximumSize(QSize(16777215, 25))
+        self.label_3.setFont(font)
 
-        self.verticalLayout.addWidget(self.frame)
+        self.verticalLayout_5.addWidget(self.label_3)
+
+        self.plainTextEdit = QPlainTextEdit(self.frame)
+        self.plainTextEdit.setObjectName(u"plainTextEdit")
+
+        self.verticalLayout_5.addWidget(self.plainTextEdit)
+
+
+        self.horizontalLayout_6.addWidget(self.frame)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_6)
 
 
         self.retranslateUi(HomePage)
@@ -335,5 +364,6 @@ class Ui_HomePage(object):
         self.pauseButton.setText("")
         self.stopButton.setText("")
         self.repeatButton.setText("")
+        self.label_3.setText(QCoreApplication.translate("HomePage", u"\ud130\ubbf8\ub110", None))
     # retranslateUi
 
