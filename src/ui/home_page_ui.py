@@ -16,7 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-    QPushButton, QSizePolicy, QVBoxLayout, QWidget)
+    QPushButton, QSizePolicy, QSlider, QVBoxLayout,
+    QWidget)
 import _icons_rc
 
 class Ui_HomePage(object):
@@ -30,6 +31,13 @@ class Ui_HomePage(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.frame_2 = QFrame(HomePage)
         self.frame_2.setObjectName(u"frame_2")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.frame_2.sizePolicy().hasHeightForWidth())
+        self.frame_2.setSizePolicy(sizePolicy)
+        self.frame_2.setMinimumSize(QSize(0, 0))
+        self.frame_2.setMaximumSize(QSize(16777215, 16777215))
         self.frame_2.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_2.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_2 = QVBoxLayout(self.frame_2)
@@ -107,6 +115,10 @@ class Ui_HomePage(object):
 
         self.frame_3 = QFrame(HomePage)
         self.frame_3.setObjectName(u"frame_3")
+        sizePolicy.setHeightForWidth(self.frame_3.sizePolicy().hasHeightForWidth())
+        self.frame_3.setSizePolicy(sizePolicy)
+        self.frame_3.setMinimumSize(QSize(0, 0))
+        self.frame_3.setMaximumSize(QSize(16777215, 16777215))
         self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.frame_3)
@@ -150,13 +162,22 @@ class Ui_HomePage(object):
         self.frame_7.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_6 = QHBoxLayout(self.frame_7)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
-        self.label_9 = QLabel(self.frame_7)
+
+        self.verticalLayout_3.addWidget(self.frame_7)
+
+        self.frame_8 = QFrame(self.frame_3)
+        self.frame_8.setObjectName(u"frame_8")
+        self.frame_8.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_8.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_7 = QHBoxLayout(self.frame_8)
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.label_9 = QLabel(self.frame_8)
         self.label_9.setObjectName(u"label_9")
         self.label_9.setMaximumSize(QSize(75, 16777215))
 
-        self.horizontalLayout_6.addWidget(self.label_9)
+        self.horizontalLayout_7.addWidget(self.label_9)
 
-        self.MainPowerButton = QPushButton(self.frame_7)
+        self.MainPowerButton = QPushButton(self.frame_8)
         self.MainPowerButton.setObjectName(u"MainPowerButton")
         self.MainPowerButton.setMinimumSize(QSize(75, 21))
         self.MainPowerButton.setMaximumSize(QSize(75, 21))
@@ -175,26 +196,112 @@ class Ui_HomePage(object):
         self.MainPowerButton.setChecked(False)
         self.MainPowerButton.setAutoRepeat(False)
 
-        self.horizontalLayout_6.addWidget(self.MainPowerButton)
+        self.horizontalLayout_7.addWidget(self.MainPowerButton)
 
-        self.MainPowerIndicator = QLabel(self.frame_7)
+        self.MainPowerIndicator = QLabel(self.frame_8)
         self.MainPowerIndicator.setObjectName(u"MainPowerIndicator")
         self.MainPowerIndicator.setMinimumSize(QSize(25, 25))
         self.MainPowerIndicator.setMaximumSize(QSize(25, 25))
         self.MainPowerIndicator.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/status_led_y.png"))
         self.MainPowerIndicator.setScaledContents(True)
 
-        self.horizontalLayout_6.addWidget(self.MainPowerIndicator)
+        self.horizontalLayout_7.addWidget(self.MainPowerIndicator)
 
-        self.mainPowerCountDownLabel = QLabel(self.frame_7)
+        self.mainPowerCountDownLabel = QLabel(self.frame_8)
         self.mainPowerCountDownLabel.setObjectName(u"mainPowerCountDownLabel")
         self.mainPowerCountDownLabel.setMaximumSize(QSize(100, 16777215))
         self.mainPowerCountDownLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.horizontalLayout_6.addWidget(self.mainPowerCountDownLabel)
+        self.horizontalLayout_7.addWidget(self.mainPowerCountDownLabel)
 
 
-        self.verticalLayout_3.addWidget(self.frame_7)
+        self.verticalLayout_3.addWidget(self.frame_8)
+
+        self.frame_9 = QFrame(self.frame_3)
+        self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout_4 = QVBoxLayout(self.frame_9)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.widget_2 = QWidget(self.frame_9)
+        self.widget_2.setObjectName(u"widget_2")
+        self.horizontalLayout_8 = QHBoxLayout(self.widget_2)
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.horizontalLayout_8.setContentsMargins(9, 0, 9, 0)
+        self.playCurrentTimeLabel = QLabel(self.widget_2)
+        self.playCurrentTimeLabel.setObjectName(u"playCurrentTimeLabel")
+
+        self.horizontalLayout_8.addWidget(self.playCurrentTimeLabel)
+
+        self.playTimeHorizontalSlider = QSlider(self.widget_2)
+        self.playTimeHorizontalSlider.setObjectName(u"playTimeHorizontalSlider")
+        self.playTimeHorizontalSlider.setMinimumSize(QSize(0, 0))
+        self.playTimeHorizontalSlider.setMaximumSize(QSize(300, 16777215))
+        self.playTimeHorizontalSlider.setOrientation(Qt.Orientation.Horizontal)
+
+        self.horizontalLayout_8.addWidget(self.playTimeHorizontalSlider)
+
+        self.playEndTimeLabel = QLabel(self.widget_2)
+        self.playEndTimeLabel.setObjectName(u"playEndTimeLabel")
+
+        self.horizontalLayout_8.addWidget(self.playEndTimeLabel)
+
+
+        self.verticalLayout_4.addWidget(self.widget_2)
+
+        self.widget_3 = QWidget(self.frame_9)
+        self.widget_3.setObjectName(u"widget_3")
+        self.horizontalLayout_9 = QHBoxLayout(self.widget_3)
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.horizontalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self.playButton = QPushButton(self.widget_3)
+        self.playButton.setObjectName(u"playButton")
+        self.playButton.setMinimumSize(QSize(0, 30))
+        self.playButton.setMaximumSize(QSize(30, 30))
+        icon2 = QIcon()
+        icon2.addFile(u":/feather/icons/feather/play-circle.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.playButton.setIcon(icon2)
+
+        self.horizontalLayout_9.addWidget(self.playButton)
+
+        self.pauseButton = QPushButton(self.widget_3)
+        self.pauseButton.setObjectName(u"pauseButton")
+        self.pauseButton.setMinimumSize(QSize(0, 30))
+        self.pauseButton.setMaximumSize(QSize(30, 30))
+        icon3 = QIcon()
+        icon3.addFile(u":/feather/icons/feather/pause-circle.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.pauseButton.setIcon(icon3)
+
+        self.horizontalLayout_9.addWidget(self.pauseButton)
+
+        self.stopButton = QPushButton(self.widget_3)
+        self.stopButton.setObjectName(u"stopButton")
+        self.stopButton.setMinimumSize(QSize(0, 30))
+        self.stopButton.setMaximumSize(QSize(30, 30))
+        icon4 = QIcon()
+        icon4.addFile(u":/feather/icons/feather/stop-circle.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.stopButton.setIcon(icon4)
+
+        self.horizontalLayout_9.addWidget(self.stopButton)
+
+        self.repeatButton = QPushButton(self.widget_3)
+        self.repeatButton.setObjectName(u"repeatButton")
+        self.repeatButton.setMinimumSize(QSize(0, 30))
+        self.repeatButton.setMaximumSize(QSize(30, 30))
+        icon5 = QIcon()
+        icon5.addFile(u":/font_awesome_solid/icons/font_awesome/solid/rotate-off.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon5.addFile(u":/font_awesome_solid/icons/font_awesome/solid/rotate.png", QSize(), QIcon.Mode.Normal, QIcon.State.On)
+        icon5.addFile(u":/font_awesome_solid/icons/font_awesome/solid/rotate-off.png", QSize(), QIcon.Mode.Disabled, QIcon.State.Off)
+        self.repeatButton.setIcon(icon5)
+        self.repeatButton.setCheckable(True)
+
+        self.horizontalLayout_9.addWidget(self.repeatButton)
+
+
+        self.verticalLayout_4.addWidget(self.widget_3)
+
+
+        self.verticalLayout_3.addWidget(self.frame_9)
 
 
         self.horizontalLayout.addWidget(self.frame_3)
@@ -231,5 +338,11 @@ class Ui_HomePage(object):
         self.MainPowerButton.setText("")
         self.MainPowerIndicator.setText("")
         self.mainPowerCountDownLabel.setText("")
+        self.playCurrentTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
+        self.playEndTimeLabel.setText(QCoreApplication.translate("HomePage", u"00:00:00", None))
+        self.playButton.setText("")
+        self.pauseButton.setText("")
+        self.stopButton.setText("")
+        self.repeatButton.setText("")
     # retranslateUi
 
