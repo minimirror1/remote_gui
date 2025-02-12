@@ -41,4 +41,30 @@ class SerialCommands(QObject):
             return success
                 
         except Exception:
+            return False
+
+    def send_play_control(self, play_state: int) -> bool:
+        """
+        재생 제어 명령 전송
+        Args:
+            play_state (int): 재생 상태 (PLAY_ONE=1, PLAY_REPEAT=2, PAUSE=3, STOP=4)
+        Returns:
+            bool: 전송 성공 여부
+        """
+        if not self.serial_manager.is_port_connected():
+            return False
+        
+        try:
+            data = bytes([play_state])
+            
+            success = self.serial_manager.send_packet(
+                receiverId=0x0001,  # 대상 장치 ID
+                senderId=0x0000,    # 호스트 ID
+                cmd=ComProtocol.CMD_PLAY_CONTROL,
+                data=data
+            )
+            
+            return success
+                
+        except Exception:
             return False 

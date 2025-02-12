@@ -32,6 +32,12 @@ class HomePage(QWidget):
         self._power_cooldown_count = 0
         self._power_button_enabled = True
         
+        # 재생 제어 관련 변수 추가
+        self._play_control_timer = QTimer(self)
+        self._play_control_timer.setInterval(3000)  # 3초 타임아웃
+        self._play_control_timer.timeout.connect(self._handle_play_control_timeout)
+        self._waiting_play_control_ack = False
+        
         # 초기 설정
         self.setup_ui()
         
@@ -41,6 +47,16 @@ class HomePage(QWidget):
         # 현재 연결된 상태라면 시그널 연결
         if self.serial_commands.serial_manager.is_port_connected():
             self.connect_protocol_signals()
+        
+        # 버튼 시그널 연결
+        self.ui.playButton.clicked.connect(self.on_play_clicked)
+        self.ui.pauseButton.clicked.connect(self.on_pause_clicked)
+        self.ui.stopButton.clicked.connect(self.on_stop_clicked)
+        
+        # 프로토콜 시그널 연결
+        if self.serial_commands.serial_manager.get_protocol():
+            self.serial_commands.serial_manager.get_protocol().play_control_status_changed.connect(
+                self.on_play_control_status_changed)
         
     def setup_ui(self):
         """UI 컴포넌트들의 추가적인 설정"""
@@ -73,6 +89,7 @@ class HomePage(QWidget):
             try:
                 self._current_protocol.main_power_status_changed.disconnect(self.update_power_status)
                 self._current_protocol.status_sync_changed.disconnect(self.update_status_info)
+                self._current_protocol.play_control_status_changed.disconnect(self.on_play_control_status_changed)
             except:
                 pass
             self._power_status_connected = False
@@ -90,6 +107,7 @@ class HomePage(QWidget):
             if not self._power_status_connected:
                 protocol.main_power_status_changed.connect(self.update_power_status)
                 protocol.status_sync_changed.connect(self.update_status_info)
+                protocol.play_control_status_changed.connect(self.on_play_control_status_changed)
                 self._power_status_connected = True
                 self._current_protocol = protocol
         
@@ -157,3 +175,69 @@ class HomePage(QWidget):
         
         energy_text = f"{voltage:.1f}V / {current:.1f}A / {power:.1f}W"
         self.ui.energyLabel.setText(energy_text)
+
+    def on_play_clicked(self):
+        """재생 버튼 클릭 처리"""
+        if self._waiting_play_control_ack:
+            return
+            
+        play_state = 2 if self.ui.repeatButton.isChecked() else 1  # PLAY_REPEAT or PLAY_ONE
+        success = self.serial_commands.send_play_control(play_state)
+        
+        if success:
+            self._waiting_play_control_ack = True
+            self._play_control_timer.start()
+        else:
+            if not self.serial_commands.serial_manager.is_port_connected():
+                QMessageBox.warning(self, "경고", "시리얼 포트가 연결되지 않았습니다.")
+            else:
+                QMessageBox.critical(self, "오류", "재생 제어 명령 전송 실패")
+    
+    def on_pause_clicked(self):
+        """일시정지 버튼 클릭 처리"""
+        if self._waiting_play_control_ack:
+            return
+            
+        success = self.serial_commands.send_play_control(3)  # PAUSE
+        
+        if success:
+            self._waiting_play_control_ack = True
+            self._play_control_timer.start()
+        else:
+            if not self.serial_commands.serial_manager.is_port_connected():
+                QMessageBox.warning(self, "경고", "시리얼 포트가 연결되지 않았습니다.")
+            else:
+                QMessageBox.critical(self, "오류", "일시정지 명령 전송 실패")
+    
+    def on_stop_clicked(self):
+        """정지 버튼 클릭 처리"""
+        if self._waiting_play_control_ack:
+            return
+            
+        success = self.serial_commands.send_play_control(4)  # STOP
+        
+        if success:
+            self._waiting_play_control_ack = True
+            self._play_control_timer.start()
+        else:
+            if not self.serial_commands.serial_manager.is_port_connected():
+                QMessageBox.warning(self, "경고", "시리얼 포트가 연결되지 않았습니다.")
+            else:
+                QMessageBox.critical(self, "오류", "정지 명령 전송 실패")
+    
+    def on_play_control_status_changed(self, status: int):
+        """재생 제어 상태 변경 처리"""
+        self._play_control_timer.stop()
+        self._waiting_play_control_ack = False
+        
+        # 상태에 따른 UI 업데이트
+        self.ui.playButton.setEnabled(status != 1 and status != 2)  # 재생 중이 아닐 때만 활성화
+        self.ui.pauseButton.setEnabled(status == 1 or status == 2)  # 재생 중일 때만 활성화
+        self.ui.stopButton.setEnabled(status != 4)  # 정지 상태가 아닐 때만 활성화
+        self.ui.repeatButton.setEnabled(True)
+    
+    def _handle_play_control_timeout(self):
+        """재생 제어 응답 타임아웃 처리"""
+        self._play_control_timer.stop()
+        self._waiting_play_control_ack = False
+        QMessageBox.warning(self, "경고", "재생 제어 응답 없음")

@@ -18,23 +18,31 @@ class ComProtocol(QObject):
     status_sync_changed = Signal(dict)  # 시간, 카운트, 전압/전류 정보를 딕셔너리로 전달
     sync_success = Signal()  # 동기화 성공 시그널
     sync_failed = Signal()   # 동기화 실패 시그널
+    play_control_status_changed = Signal(int)  # 재생 상태 변경 시그널
 
     # 명령어 및 상수 정의
+    # 네트워크 0x0000 ~ 0x00FF
     CMD_ACK_BIT = 0x8000
     CMD_PING = 0x0001
     CMD_PONG = CMD_PING | CMD_ACK_BIT  # PONG 응답용
     CMD_FILE_RECEIVE = 0x0002         # 파일 수신 요청
     CMD_FILE_RECEIVE_ACK = CMD_FILE_RECEIVE | CMD_ACK_BIT
     CMD_CONFIG = 0x0003
-
+    # 상태 동기화
     CMD_STATUS_SYNC = 0x0010
     CMD_STATUS_SYNC_ACK = CMD_STATUS_SYNC | CMD_ACK_BIT
+    # 새 세션 연결결    
+    CMD_SESSION_SYNC = 0x0020
+    CMD_SESSION_SYNC_ACK = CMD_SESSION_SYNC | CMD_ACK_BIT
 
+    # 제어 0x0100 ~ 0x01FF
     CMD_MAIN_POWER_CONTROL = 0x0100
     CMD_MAIN_POWER_CONTROL_ACK = CMD_MAIN_POWER_CONTROL | CMD_ACK_BIT
 
-    CMD_SESSION_SYNC = 0x0020
-    CMD_SESSION_SYNC_ACK = CMD_SESSION_SYNC | CMD_ACK_BIT
+    CMD_PLAY_CONTROL = 0x0110;
+    CMD_PLAY_CONTROL_ACK = CMD_PLAY_CONTROL | CMD_ACK_BIT;
+
+
 
     MAX_RETRY_COUNT = 5
     MAX_FILENAME_LENGTH = 256
@@ -374,7 +382,7 @@ class ComProtocol(QObject):
 
         if len(payload) >= 1:
             power_status = bool(payload[0])
-            self.main_power_status_changed.emit(power_status)
+            self.main_power_status_changed.emit(power_status)    
 
     def handleUnknownCommand(self, cmd):
         """
@@ -388,6 +396,12 @@ class ComProtocol(QObject):
         파일 전송 요청 패킷에 대한 처리 (필요시 재정의).
         """
         pass
+
+    def handlePlayControlAck(self, senderId, payload):
+        """재생 제어 응답 처리"""
+        if len(payload) >= 1:
+            play_status = payload[0]
+            self.play_control_status_changed.emit(play_status)
 
     # --------------------------------------------------
 
@@ -406,6 +420,7 @@ class ComProtocol(QObject):
             
         return crc
 
+    # cmd 분류류
     def processCommand(self, senderId, receiverId, cmd, payload, payloadLength):
         """
         수신한 패킷의 명령어(cmd)에 따라 적절한 핸들러로 전달한다.
@@ -420,6 +435,8 @@ class ComProtocol(QObject):
             self.handleStatusSyncAck(senderId, payload)
         elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
             self.handleMainPowerControlAck(senderId, payload)
+        elif cmd == ComProtocol.CMD_PLAY_CONTROL_ACK:
+            self.handlePlayControlAck(senderId, payload)
         elif cmd == ComProtocol.CMD_SESSION_SYNC:
             if len(payload) >= 6:
                 timestamp = struct.unpack('>I', payload[0:4])[0]
