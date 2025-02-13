@@ -4491,5 +4491,13 @@
     <file>icons/user/status_led_g.png</file>
     <file>icons/user/status_led_y.png</file>
     <file>icons/user/splash.png</file>
+    <file>icons/user/jog_ccw_btn_off.png</file>
+    <file>icons/user/jog_ccw_btn_on.png</file>
+    <file>icons/user/jog_cw_btn_off.png</file>
+    <file>icons/user/jog_cw_btn_on.png</file>
+    <file>icons/user/jog_sen_main_on.png</file>
+    <file>icons/user/jog_sen_main_off.png</file>
+    <file>icons/user/jog_sen_sub_off.png</file>
+    <file>icons/user/jog_sen_sub_on.png</file>
   </qresource>
 </RCC>

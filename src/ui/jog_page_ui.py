@@ -18,15 +18,17 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
     QPushButton, QSizePolicy, QSpinBox, QVBoxLayout,
     QWidget)
+import _icons_rc
 
 class Ui_Form(object):
     def setupUi(self, Form):
         if not Form.objectName():
             Form.setObjectName(u"Form")
-        Form.resize(640, 480)
+        Form.resize(1070, 587)
+        self.verticalLayout_5 = QVBoxLayout(Form)
+        self.verticalLayout_5.setObjectName(u"verticalLayout_5")
         self.frame = QFrame(Form)
         self.frame.setObjectName(u"frame")
-        self.frame.setGeometry(QRect(60, 70, 316, 154))
         self.frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.verticalLayout_4 = QVBoxLayout(self.frame)
@@ -43,11 +45,17 @@ class Ui_Form(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.label_3 = QLabel(self.widget)
         self.label_3.setObjectName(u"label_3")
+        font = QFont()
+        font.setPointSize(20)
+        self.label_3.setFont(font)
+        self.label_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout.addWidget(self.label_3)
 
         self.spinBox = QSpinBox(self.widget)
         self.spinBox.setObjectName(u"spinBox")
+        self.spinBox.setMinimumSize(QSize(0, 0))
+        self.spinBox.setFont(font)
 
         self.verticalLayout.addWidget(self.spinBox)
 
@@ -60,11 +68,14 @@ class Ui_Form(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.label_4 = QLabel(self.widget_2)
         self.label_4.setObjectName(u"label_4")
+        self.label_4.setFont(font)
+        self.label_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_2.addWidget(self.label_4)
 
         self.spinBox_2 = QSpinBox(self.widget_2)
         self.spinBox_2.setObjectName(u"spinBox_2")
+        self.spinBox_2.setFont(font)
 
         self.verticalLayout_2.addWidget(self.spinBox_2)
 
@@ -77,11 +88,17 @@ class Ui_Form(object):
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.label_5 = QLabel(self.widget_3)
         self.label_5.setObjectName(u"label_5")
+        self.label_5.setFont(font)
+        self.label_5.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.verticalLayout_3.addWidget(self.label_5)
 
         self.spinBox_3 = QSpinBox(self.widget_3)
         self.spinBox_3.setObjectName(u"spinBox_3")
+        font1 = QFont()
+        font1.setPointSize(20)
+        font1.setBold(False)
+        self.spinBox_3.setFont(font1)
 
         self.verticalLayout_3.addWidget(self.spinBox_3)
 
@@ -97,28 +114,45 @@ class Ui_Form(object):
         self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.frame_3)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.pushButton = QPushButton(self.frame_3)
-        self.pushButton.setObjectName(u"pushButton")
+        self.ccwButton = QPushButton(self.frame_3)
+        self.ccwButton.setObjectName(u"ccwButton")
+        self.ccwButton.setMinimumSize(QSize(100, 150))
+        self.ccwButton.setStyleSheet(u"")
+        self.ccwButton.setIconSize(QSize(100, 100))
+        self.ccwButton.setCheckable(False)
 
-        self.horizontalLayout_2.addWidget(self.pushButton)
+        self.horizontalLayout_2.addWidget(self.ccwButton)
 
-        self.label = QLabel(self.frame_3)
-        self.label.setObjectName(u"label")
+        self.sensor_main_led_ind = QLabel(self.frame_3)
+        self.sensor_main_led_ind.setObjectName(u"sensor_main_led_ind")
+        self.sensor_main_led_ind.setMaximumSize(QSize(200, 200))
+        self.sensor_main_led_ind.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/jog_sen_main_off.png"))
+        self.sensor_main_led_ind.setScaledContents(False)
+        self.sensor_main_led_ind.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.horizontalLayout_2.addWidget(self.label)
+        self.horizontalLayout_2.addWidget(self.sensor_main_led_ind)
 
-        self.label_2 = QLabel(self.frame_3)
-        self.label_2.setObjectName(u"label_2")
+        self.sensor_sub_led_ind = QLabel(self.frame_3)
+        self.sensor_sub_led_ind.setObjectName(u"sensor_sub_led_ind")
+        self.sensor_sub_led_ind.setMaximumSize(QSize(200, 200))
+        self.sensor_sub_led_ind.setPixmap(QPixmap(u":/font_awesome_solid/icons/user/jog_sen_sub_off.png"))
+        self.sensor_sub_led_ind.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.horizontalLayout_2.addWidget(self.label_2)
+        self.horizontalLayout_2.addWidget(self.sensor_sub_led_ind)
 
-        self.pushButton_2 = QPushButton(self.frame_3)
-        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.cwButton = QPushButton(self.frame_3)
+        self.cwButton.setObjectName(u"cwButton")
+        self.cwButton.setMinimumSize(QSize(100, 150))
+        self.cwButton.setStyleSheet(u"")
+        self.cwButton.setIconSize(QSize(100, 100))
 
-        self.horizontalLayout_2.addWidget(self.pushButton_2)
+        self.horizontalLayout_2.addWidget(self.cwButton)
 
 
         self.verticalLayout_4.addWidget(self.frame_3)
+
+
+        self.verticalLayout_5.addWidget(self.frame)
 
 
         self.retranslateUi(Form)
@@ -128,12 +162,12 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
-        self.label_3.setText(QCoreApplication.translate("Form", u"id", None))
-        self.label_4.setText(QCoreApplication.translate("Form", u"subid", None))
-        self.label_5.setText(QCoreApplication.translate("Form", u"value", None))
-        self.pushButton.setText(QCoreApplication.translate("Form", u"ccw", None))
-        self.label.setText(QCoreApplication.translate("Form", u"led", None))
-        self.label_2.setText(QCoreApplication.translate("Form", u"led", None))
-        self.pushButton_2.setText(QCoreApplication.translate("Form", u"cw", None))
+        self.label_3.setText(QCoreApplication.translate("Form", u"ID", None))
+        self.label_4.setText(QCoreApplication.translate("Form", u"SUB ID", None))
+        self.label_5.setText(QCoreApplication.translate("Form", u"SPEED(value)", None))
+        self.ccwButton.setText("")
+        self.sensor_main_led_ind.setText("")
+        self.sensor_sub_led_ind.setText("")
+        self.cwButton.setText("")
     # retranslateUi
 

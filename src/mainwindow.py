@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt  # Qt 플래그를 사용하기 위해 추가
 
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
 from src.home_page import HomePage  # HomePage UI 클래스 import 추가
+from src.jog_page import JogPage  # JogPage UI 클래스 import 추가
 from src.setting_page import SettingPage  # SettingPage UI 클래스 import 추가
 from src.help_page import HelpPage  # HelpPage UI 클래스 import 추가
 
@@ -91,6 +92,10 @@ class MainWindow(QMainWindow):
         # HomePage UI 초기화 - addWidget 방식으로 변경
         self.home_page = HomePage()
         self.ui.mainPage.addWidget(self.home_page)
+
+        # JogPage UI 초기화
+        self.jog_page = JogPage()
+        self.ui.mainPage.addWidget(self.jog_page)
         
         # SettingPage UI 초기화
         self.setting_page = SettingPage()
@@ -114,9 +119,9 @@ class MainWindow(QMainWindow):
         # 페이지 전환 버튼 시그널 연결        
         self.ui.HomeButton.clicked.connect(lambda: self.change_page(0))  # HomePage
         self.ui.PlayButton.clicked.connect(lambda: self.change_page(0))  # PlayPage
-        self.ui.jogButton.clicked.connect(lambda: self.change_page(0))   # JogPage
-        self.ui.SettingButton.clicked.connect(lambda: self.change_page(1))  # SettingPage
-        self.ui.HelpButton.clicked.connect(lambda: self.change_page(2))  # HelpPage
+        self.ui.jogButton.clicked.connect(lambda: self.change_page(1))   # JogPage
+        self.ui.SettingButton.clicked.connect(lambda: self.change_page(2))  # SettingPage
+        self.ui.HelpButton.clicked.connect(lambda: self.change_page(3))  # HelpPage
 
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)
