@@ -52,12 +52,12 @@ class Ui_Form(object):
 
         self.verticalLayout.addWidget(self.label_3)
 
-        self.spinBox = QSpinBox(self.widget)
-        self.spinBox.setObjectName(u"spinBox")
-        self.spinBox.setMinimumSize(QSize(0, 0))
-        self.spinBox.setFont(font)
+        self.idSpinBox = QSpinBox(self.widget)
+        self.idSpinBox.setObjectName(u"idSpinBox")
+        self.idSpinBox.setMinimumSize(QSize(0, 0))
+        self.idSpinBox.setFont(font)
 
-        self.verticalLayout.addWidget(self.spinBox)
+        self.verticalLayout.addWidget(self.idSpinBox)
 
 
         self.horizontalLayout.addWidget(self.widget)
@@ -73,11 +73,11 @@ class Ui_Form(object):
 
         self.verticalLayout_2.addWidget(self.label_4)
 
-        self.spinBox_2 = QSpinBox(self.widget_2)
-        self.spinBox_2.setObjectName(u"spinBox_2")
-        self.spinBox_2.setFont(font)
+        self.subIdSpinBox = QSpinBox(self.widget_2)
+        self.subIdSpinBox.setObjectName(u"subIdSpinBox")
+        self.subIdSpinBox.setFont(font)
 
-        self.verticalLayout_2.addWidget(self.spinBox_2)
+        self.verticalLayout_2.addWidget(self.subIdSpinBox)
 
 
         self.horizontalLayout.addWidget(self.widget_2)
@@ -93,14 +93,14 @@ class Ui_Form(object):
 
         self.verticalLayout_3.addWidget(self.label_5)
 
-        self.spinBox_3 = QSpinBox(self.widget_3)
-        self.spinBox_3.setObjectName(u"spinBox_3")
+        self.speedSpinBox = QSpinBox(self.widget_3)
+        self.speedSpinBox.setObjectName(u"speedSpinBox")
         font1 = QFont()
         font1.setPointSize(20)
         font1.setBold(False)
-        self.spinBox_3.setFont(font1)
+        self.speedSpinBox.setFont(font1)
 
-        self.verticalLayout_3.addWidget(self.spinBox_3)
+        self.verticalLayout_3.addWidget(self.speedSpinBox)
 
 
         self.horizontalLayout.addWidget(self.widget_3)

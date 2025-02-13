@@ -51,7 +51,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox">
+             <widget class="QSpinBox" name="idSpinBox">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -87,7 +87,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox_2">
+             <widget class="QSpinBox" name="subIdSpinBox">
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
@@ -117,7 +117,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox_3">
+             <widget class="QSpinBox" name="speedSpinBox">
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
