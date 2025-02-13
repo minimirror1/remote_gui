@@ -4490,5 +4490,6 @@
     <file>icons/user/status_led_r.png</file>
     <file>icons/user/status_led_g.png</file>
     <file>icons/user/status_led_y.png</file>
+    <file>icons/user/splash.png</file>
   </qresource>
 </RCC>
