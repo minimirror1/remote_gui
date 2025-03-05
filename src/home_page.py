@@ -251,6 +251,47 @@ class HomePage(QWidget):
         energy_text = f"{voltage:.1f}V / {current:.1f}A / {power:.1f}W"
         self.ui.energyLabel.setText(energy_text)
         
+        # 에러 정보 업데이트 (새로 추가된 부분)
+        if 'error' in status_data:
+            error_info = status_data['error']
+            error_flag = error_info['flag']
+            
+            if error_flag:
+                # 에러가 있는 경우
+                can_id = error_info['can_id']
+                can_sub_id = error_info['can_sub_id']
+                error_code = error_info['code']
+                
+                # 에러 상태 표시
+                self.ui.errorLabel.setText(f"에러 상태 : 오류 발생")
+                self.ui.errorIdLabel.setText(f"아이디 : CAN ID {can_id}, SUB ID {can_sub_id}")
+                self.ui.errorCodeLabel.setText(f"에러 코드 : {error_code}")
+                
+                # 에러 상태일 때 UI 스타일 변경 (빨간색으로 표시)
+                self.ui.errorLabel.setStyleSheet("color: red; font-weight: bold;")
+                self.ui.errorIdLabel.setStyleSheet("color: red;")
+                self.ui.errorCodeLabel.setStyleSheet("color: red;")
+            else:
+                # 에러가 없는 경우
+                self.ui.errorLabel.setText("에러 상태 : 정상")
+                self.ui.errorIdLabel.setText("아이디 : -")
+                self.ui.errorCodeLabel.setText("에러 코드 : -")
+                
+                # 정상 상태일 때 UI 스타일 초기화
+                self.ui.errorLabel.setStyleSheet("")
+                self.ui.errorIdLabel.setStyleSheet("")
+                self.ui.errorCodeLabel.setStyleSheet("")
+        else:
+            # 에러 정보가 없는 경우 (이전 버전과의 호환성)
+            self.ui.errorLabel.setText("에러 상태 : 정보 없음")
+            self.ui.errorIdLabel.setText("아이디 : -")
+            self.ui.errorCodeLabel.setText("에러 코드 : -")
+            
+            # 스타일 초기화
+            self.ui.errorLabel.setStyleSheet("")
+            self.ui.errorIdLabel.setStyleSheet("")
+            self.ui.errorCodeLabel.setStyleSheet("")
+        
         # 모션 시간 정보 업데이트 (이미 ms 단위로 수신)
         motion_info = status_data.get('motion', {})
         current_time = motion_info.get('current', 0)  # ms 단위

@@ -110,6 +110,44 @@ class Ui_HomePage(object):
 
         self.verticalLayout_2.addWidget(self.frame_6)
 
+        self.line = QFrame(self.frame_2)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.Shape.HLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.verticalLayout_2.addWidget(self.line)
+
+        self.label_5 = QLabel(self.frame_2)
+        self.label_5.setObjectName(u"label_5")
+        self.label_5.setMaximumSize(QSize(16777215, 25))
+        self.label_5.setFont(font)
+
+        self.verticalLayout_2.addWidget(self.label_5)
+
+        self.frame_10 = QFrame(self.frame_2)
+        self.frame_10.setObjectName(u"frame_10")
+        self.frame_10.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_10.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_10 = QHBoxLayout(self.frame_10)
+        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
+        self.errorLabel = QLabel(self.frame_10)
+        self.errorLabel.setObjectName(u"errorLabel")
+
+        self.horizontalLayout_10.addWidget(self.errorLabel)
+
+        self.errorIdLabel = QLabel(self.frame_10)
+        self.errorIdLabel.setObjectName(u"errorIdLabel")
+
+        self.horizontalLayout_10.addWidget(self.errorIdLabel)
+
+        self.errorCodeLabel = QLabel(self.frame_10)
+        self.errorCodeLabel.setObjectName(u"errorCodeLabel")
+
+        self.horizontalLayout_10.addWidget(self.errorCodeLabel)
+
+
+        self.verticalLayout_2.addWidget(self.frame_10)
+
 
         self.horizontalLayout.addWidget(self.frame_2)
 
@@ -352,6 +390,10 @@ class Ui_HomePage(object):
         self.roundLabel.setText(QCoreApplication.translate("HomePage", u"0/0", None))
         self.label_6.setText(QCoreApplication.translate("HomePage", u"\uc5d0\ub108\uc9c0", None))
         self.energyLabel.setText(QCoreApplication.translate("HomePage", u"000V / 000A / 000W", None))
+        self.label_5.setText(QCoreApplication.translate("HomePage", u"\uc5d0\ub7ec", None))
+        self.errorLabel.setText(QCoreApplication.translate("HomePage", u"\uc5d0\ub7ec \uc0c1\ud0dc : ", None))
+        self.errorIdLabel.setText(QCoreApplication.translate("HomePage", u"\uc544\uc774\ub514 : ", None))
+        self.errorCodeLabel.setText(QCoreApplication.translate("HomePage", u"\uc5d0\ub7ec \ucf54\ub4dc : ", None))
         self.label_8.setText(QCoreApplication.translate("HomePage", u"\uc81c\uc5b4", None))
         self.pushButton.setText("")
         self.label_9.setText(QCoreApplication.translate("HomePage", u"\uba54\uc778 \uc804\uc6d0", None))
