@@ -124,3 +124,7 @@ class SerialReaderThread(QThread):
     def set_sync_interval(self, interval_ms: int):
         """Sync 패킷 전송 주기 설정"""
         self._sync_interval = interval_ms 
+        
+    def is_sync_enabled(self) -> bool:
+        """현재 Sync 패킷 전송 활성화 상태 반환"""
+        return self._sync_enabled 

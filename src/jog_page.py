@@ -30,6 +30,9 @@ class JogPage(QWidget):
         # 현재 눌린 키 추적을 위한 변수
         self._pressed_key = None
         
+        # 이전 동기화 상태 저장 변수
+        self._previous_sync_state = True
+        
         # 초기 설정
         self.setup_ui()
         
@@ -149,3 +152,30 @@ class JogPage(QWidget):
             self.ui.cwButton.setDown(False)
             self._pressed_key = None
         event.accept()
+        
+    def showEvent(self, event):
+        """페이지가 표시될 때 호출됩니다."""
+        super().showEvent(event)
+        
+        # 동기화 비활성화
+        reader_thread = self.serial_commands.serial_manager.get_reader_thread()
+        if reader_thread:
+            # 이전 동기화 상태 저장
+            self._previous_sync_state = reader_thread.is_sync_enabled()
+            
+            # 동기화 비활성화
+            reader_thread.set_sync_enabled(False)
+            print("조그 페이지 진입: 동기화 비활성화")
+            
+    def hideEvent(self, event):
+        """페이지가 숨겨질 때 호출됩니다."""
+        super().hideEvent(event)
+        
+        # 동기화 이전 상태로 복원
+        reader_thread = self.serial_commands.serial_manager.get_reader_thread()
+        if reader_thread:
+            reader_thread.set_sync_enabled(self._previous_sync_state)
+            if self._previous_sync_state:
+                print("조그 페이지 종료: 동기화 활성화")
+            else:
+                print("조그 페이지 종료: 동기화 비활성화 유지")
