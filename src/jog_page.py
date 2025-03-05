@@ -3,10 +3,14 @@ from PySide6.QtGui import QPixmap
 from src.ui.jog_page_ui import Ui_Form
 from src.widgets.serial_commands import SerialCommands
 import _icons_rc
+from PySide6.QtCore import Qt
 
 class JogPage(QWidget):
     def __init__(self):
         super().__init__()
+        
+        # 키보드 포커스 활성화
+        self.setFocusPolicy(Qt.StrongFocus)
         
         # UI 설정
         self.ui = Ui_Form()
@@ -22,6 +26,9 @@ class JogPage(QWidget):
         self.sensor_led_sub_off = QPixmap(u":/font_awesome_solid/icons/user/jog_sen_sub_off.png")
         #self.led_on = QPixmap(u":/font_awesome_solid/icons/user/status_led_g.png")
         #self.led_off = QPixmap(u":/font_awesome_solid/icons/user/status_led_r.png")
+        
+        # 현재 눌린 키 추적을 위한 변수
+        self._pressed_key = None
         
         # 초기 설정
         self.setup_ui()
@@ -64,9 +71,9 @@ class JogPage(QWidget):
         self.ui.sensor_sub_led_ind.setPixmap(self.sensor_led_sub_off)
         
         # SpinBox 범위 설정
-        self.ui.spinBox.setRange(0, 255)    # id
-        self.ui.spinBox_2.setRange(0, 255)  # subid
-        self.ui.spinBox_3.setRange(0, 255)  # value
+        self.ui.idSpinBox.setRange(0, 255)    # id
+        self.ui.subIdSpinBox.setRange(0, 255)  # subid
+        self.ui.speedSpinBox.setRange(0, 255)  # speed
         
         # 버튼 시그널 연결
         self.ui.cwButton.clicked.connect(self.on_ccw_clicked)    # CCW 버튼
@@ -84,18 +91,51 @@ class JogPage(QWidget):
     
     def on_ccw_clicked(self):
         """CCW 버튼 클릭 처리"""
-        id_value = self.ui.spinBox.value()
-        subid_value = self.ui.spinBox_2.value()
-        value = self.ui.spinBox_3.value()
+        id_value = self.ui.idSpinBox.value()
+        subid_value = self.ui.subIdSpinBox.value()
+        value = self.ui.speedSpinBox.value()
         
         # CCW 명령 전송 (실제 구현은 SerialCommands에서 해당 메서드 추가 필요)
-        self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CCW")
+        #self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CCW")
     
     def on_cw_clicked(self):
         """CW 버튼 클릭 처리"""
-        id_value = self.ui.spinBox.value()
-        subid_value = self.ui.spinBox_2.value()
-        value = self.ui.spinBox_3.value()
+        id_value = self.ui.idSpinBox.value()
+        subid_value = self.ui.subIdSpinBox.value()
+        value = self.ui.speedSpinBox.value()
         
         # CW 명령 전송 (실제 구현은 SerialCommands에서 해당 메서드 추가 필요)
-        self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CW")
+        #self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CW")
+
+    def keyPressEvent(self, event):
+        """키보드 키 누름 이벤트 처리"""
+        # 이미 다른 키가 눌려있다면 무시
+        if self._pressed_key is not None:
+            event.accept()
+            return
+            
+        if event.key() == Qt.Key_Left:
+            self._pressed_key = Qt.Key_Left
+            self.ui.ccwButton.setDown(True)
+            self.on_ccw_clicked()
+        elif event.key() == Qt.Key_Right:
+            self._pressed_key = Qt.Key_Right
+            self.ui.cwButton.setDown(True)
+            self.on_cw_clicked()
+        elif event.key() == Qt.Key_Up:
+            current_value = self.ui.speedSpinBox.value()
+            self.ui.speedSpinBox.setValue(min(current_value + 10, 255))
+        elif event.key() == Qt.Key_Down:
+            current_value = self.ui.speedSpinBox.value()
+            self.ui.speedSpinBox.setValue(max(current_value - 10, 0))
+        event.accept()
+
+    def keyReleaseEvent(self, event):
+        """키보드 키 뗌 이벤트 처리"""
+        if event.key() == Qt.Key_Left and self._pressed_key == Qt.Key_Left:
+            self.ui.ccwButton.setDown(False)
+            self._pressed_key = None
+        elif event.key() == Qt.Key_Right and self._pressed_key == Qt.Key_Right:
+            self.ui.cwButton.setDown(False)
+            self._pressed_key = None
+        event.accept()
