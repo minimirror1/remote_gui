@@ -48,8 +48,10 @@ class ComProtocol(QObject):
 
     CMD_PLAY_CONTROL = 0x0110;
     CMD_PLAY_CONTROL_ACK = CMD_PLAY_CONTROL | CMD_ACK_BIT;
-
-
+    
+    # 조그 이동 제어
+    CMD_JOG_MOVE_CWCCW = 0x0120;
+    CMD_JOG_MOVE_CWCCW_ACK = CMD_JOG_MOVE_CWCCW | CMD_ACK_BIT;
 
     MAX_RETRY_COUNT = 5
     MAX_FILENAME_LENGTH = 256
@@ -480,6 +482,9 @@ class ComProtocol(QObject):
                 self.waiting_for_sync = False
                 self.sync_success.emit()
                 print("동기화 성공")
+        elif cmd == ComProtocol.CMD_JOG_MOVE_CWCCW_ACK:
+            # 조그 이동 제어 처리
+            pass
         else:
             self.handleUnknownCommand(cmd)
 

@@ -76,8 +76,8 @@ class JogPage(QWidget):
         self.ui.speedSpinBox.setRange(0, 255)  # speed
         
         # 버튼 시그널 연결
-        self.ui.cwButton.clicked.connect(self.on_ccw_clicked)    # CCW 버튼
-        self.ui.ccwButton.clicked.connect(self.on_cw_clicked)   # CW 버튼
+        self.ui.cwButton.clicked.connect(self.on_cw_clicked)    # CW 버튼
+        self.ui.ccwButton.clicked.connect(self.on_ccw_clicked)   # CCW 버튼
         
     def on_connection_changed(self, is_connected: bool):
         """시리얼 연결 상태가 변경될 때 호출"""
@@ -93,19 +93,29 @@ class JogPage(QWidget):
         """CCW 버튼 클릭 처리"""
         id_value = self.ui.idSpinBox.value()
         subid_value = self.ui.subIdSpinBox.value()
-        value = self.ui.speedSpinBox.value()
+        speed_value = self.ui.speedSpinBox.value()
         
-        # CCW 명령 전송 (실제 구현은 SerialCommands에서 해당 메서드 추가 필요)
-        #self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CCW")
+        # CCW 명령 전송
+        self.serial_commands.send_jog_move_cwccw(
+            direction="CCW", 
+            speed=speed_value,
+            id_value=id_value,
+            subid_value=subid_value
+        )
     
     def on_cw_clicked(self):
         """CW 버튼 클릭 처리"""
         id_value = self.ui.idSpinBox.value()
         subid_value = self.ui.subIdSpinBox.value()
-        value = self.ui.speedSpinBox.value()
+        speed_value = self.ui.speedSpinBox.value()
         
-        # CW 명령 전송 (실제 구현은 SerialCommands에서 해당 메서드 추가 필요)
-        #self.serial_commands.send_jog_command(id_value, subid_value, value, direction="CW")
+        # CW 명령 전송
+        self.serial_commands.send_jog_move_cwccw(
+            direction="CW", 
+            speed=speed_value,
+            id_value=id_value,
+            subid_value=subid_value
+        )
 
     def keyPressEvent(self, event):
         """키보드 키 누름 이벤트 처리"""

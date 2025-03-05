@@ -68,3 +68,49 @@ class SerialCommands(QObject):
                 
         except Exception:
             return False 
+        
+    def send_jog_move_cwccw(self, direction: str, speed: int, id_value: int = 0, subid_value: int = 0) -> bool:
+        """
+        조그 이동 명령 전송 (CW/CCW)
+        Args:
+            direction (str): 이동 방향 ("CW" 또는 "CCW")
+            speed (int): 이동 속도
+            id_value (int, optional): 장치 ID. 기본값은 0
+            subid_value (int, optional): 서브 ID. 기본값은 0
+        Returns:
+            bool: 전송 성공 여부
+        """
+        if not self.serial_manager.is_port_connected():
+            return False
+            
+        try:
+            # 방향 값 설정 (0=CCW, 1=CW)
+            direction_value = 1 if direction.upper() == "CW" else 0
+            
+            # 페이로드 구성
+            # [id(1), subId(1), speed(4), direction(1)]
+            data = bytearray()
+            data.append(id_value)  # ID
+            data.append(subid_value)  # SubID
+            
+            # speed 값을 4바이트로 변환하여 추가 (빅 엔디안)
+            data.append((speed >> 24) & 0xFF)  # 최상위 바이트
+            data.append((speed >> 16) & 0xFF)
+            data.append((speed >> 8) & 0xFF)
+            data.append(speed & 0xFF)  # 최하위 바이트
+            
+            # 방향 추가
+            data.append(direction_value)
+            
+            # 명령어 코드 사용
+            success = self.serial_manager.send_packet(
+                receiverId=0x0001,  # 대상 장치 ID
+                senderId=0x0000,    # 호스트 ID
+                cmd=ComProtocol.CMD_JOG_MOVE_CWCCW,
+                data=bytes(data)
+            )
+            
+            return success
+                
+        except Exception:
+            return False
