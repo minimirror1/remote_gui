@@ -17,6 +17,15 @@ class PlayControlState(enum.Enum):
     PAUSE = 0x03       # 일시 정지
     STOP = 0x04        # 정지
 
+class MotorType(enum.Enum):
+    """모터 타입 정의"""
+    NULL = 0     # 모터 없음
+    RC = 1       # RC 모터
+    AC = 2       # AC 모터
+    BLDC = 3     # BLDC 모터
+    ZER = 4      # ZER 모터
+    DXL = 5      # 다이나믹셀 모터
+
 
 class ComProtocol(QObject):
     # 시그널 정의
@@ -346,7 +355,7 @@ class ComProtocol(QObject):
     
     def handleStatusSyncAck(self, senderId, payload):
         """상태 동기화 응답 처리"""
-        if len(payload) < 28:  # 페이로드 길이 체크 (28바이트로 확장)
+        if len(payload) < 29:  # 페이로드 길이 체크 (29바이트로 확장)
             return
 
         try:
@@ -376,14 +385,21 @@ class ComProtocol(QObject):
             motion_current = struct.unpack('>H', payload[13:15])[0]
             motion_end = struct.unpack('>H', payload[15:17])[0]
             
-            # 에러 정보 파싱 (새로 추가된 부분)
+            # 에러 정보 파싱
             error_flag = bool(payload[17])
             can_id = payload[18]
             can_sub_id = payload[19]
             
+            # 모터 타입 파싱 (새로 추가된 부분)
+            try:
+                motor_type = MotorType(payload[20])
+                motor_type_name = motor_type.name  # 열거형 이름을 문자열로 변환
+            except ValueError:
+                motor_type_name = "UNKNOWN"  # 알 수 없는 모터 타입인 경우
+            
             # 에러 코드 문자열 파싱 (최대 8바이트)
             error_code_str = ""
-            for i in range(20, 28):
+            for i in range(21, 29):  # 인덱스 변경 (20->21, 28->29)
                 if payload[i] != 0:  # null 문자가 아닌 경우에만 추가
                     error_code_str += chr(payload[i])
 
@@ -414,6 +430,7 @@ class ComProtocol(QObject):
                     'flag': error_flag,
                     'can_id': can_id,
                     'can_sub_id': can_sub_id,
+                    'motor_type': motor_type_name,  # 모터 타입 추가
                     'code': error_code_str
                 }
             }

@@ -260,11 +260,12 @@ class HomePage(QWidget):
                 # 에러가 있는 경우
                 can_id = error_info['can_id']
                 can_sub_id = error_info['can_sub_id']
+                motor_type = error_info.get('motor_type', 'UNKNOWN')  # 모터 타입 정보 가져오기
                 error_code = error_info['code']
                 
                 # 에러 상태 표시
                 self.ui.errorLabel.setText(f"에러 상태 : 오류 발생")
-                self.ui.errorIdLabel.setText(f"아이디 : CAN ID {can_id}, SUB ID {can_sub_id}")
+                self.ui.errorIdLabel.setText(f"아이디 : {can_id}-{can_sub_id}, [{motor_type}]")
                 self.ui.errorCodeLabel.setText(f"에러 코드 : {error_code}")
                 
                 # 에러 상태일 때 UI 스타일 변경 (빨간색으로 표시)
@@ -273,8 +274,9 @@ class HomePage(QWidget):
                 self.ui.errorCodeLabel.setStyleSheet("color: red;")
             else:
                 # 에러가 없는 경우
+                motor_type = error_info.get('motor_type', 'UNKNOWN')  # 모터 타입 정보 가져오기
                 self.ui.errorLabel.setText("에러 상태 : 정상")
-                self.ui.errorIdLabel.setText("아이디 : -")
+                self.ui.errorIdLabel.setText(f"모터 타입 : -")
                 self.ui.errorCodeLabel.setText("에러 코드 : -")
                 
                 # 정상 상태일 때 UI 스타일 초기화
