@@ -35,6 +35,7 @@ class ComProtocol(QObject):
     sync_success = Signal()  # 동기화 성공 시그널
     sync_failed = Signal()   # 동기화 실패 시그널
     play_control_status_changed = Signal(int)  # 재생 상태 변경 시그널
+    id_scan_received = Signal(int)  # ID 스캔 응답 수신 시그널 추가 (ID 전달)
 
     # 명령어 및 상수 정의
     # 네트워크 0x0000 ~ 0x00FF
@@ -44,6 +45,9 @@ class ComProtocol(QObject):
     CMD_FILE_RECEIVE = 0x0002         # 파일 수신 요청
     CMD_FILE_RECEIVE_ACK = CMD_FILE_RECEIVE | CMD_ACK_BIT
     CMD_CONFIG = 0x0003
+    CMD_ID_SCAN = 0x0004
+    CMD_ID_SCAN_ACK = CMD_ID_SCAN | CMD_ACK_BIT
+
     # 상태 동기화
     CMD_STATUS_SYNC = 0x0010
     CMD_STATUS_SYNC_ACK = CMD_STATUS_SYNC | CMD_ACK_BIT
@@ -341,6 +345,8 @@ class ComProtocol(QObject):
         self.sendData(senderId, 0, ComProtocol.CMD_PONG, payload)
 
 
+
+
     def handleData(self, senderId, payload):
         """
         데이터 패킷 수신에 대한 처리 (필요시 재정의).
@@ -461,6 +467,18 @@ class ComProtocol(QObject):
         """
         pass
 
+    def handleIdScanAck(self, senderId, payload):
+        """
+        ID 스캔 응답 패킷에 대한 처리.
+        페이로드의 첫 번째 바이트에서 응답 장치의 ID를 추출하고 시그널을 발생시킨다.
+        """
+        if len(payload) >= 1:
+            device_id = payload[0]
+            print(f"ID Scan Ack Received from {senderId}. Device ID: {device_id}")
+            self.id_scan_received.emit(device_id)  # 수신된 ID를 시그널로 전달
+        else:
+            print("ID Scan Ack Received with empty payload.")
+
     def handlePlayControlAck(self, senderId, payload):
         """재생 제어 응답 처리"""
         if len(payload) >= 1:
@@ -495,6 +513,8 @@ class ComProtocol(QObject):
             self.handleFileReceive(senderId, payload)
         elif cmd == ComProtocol.CMD_CONFIG:
             self.handleConfig(senderId, payload)
+        elif cmd == ComProtocol.CMD_ID_SCAN_ACK:
+            self.handleIdScanAck(senderId, payload)
         elif cmd == ComProtocol.CMD_STATUS_SYNC_ACK:
             self.handleStatusSyncAck(senderId, payload)
         elif cmd == ComProtocol.CMD_MAIN_POWER_CONTROL_ACK:
@@ -581,6 +601,13 @@ class ComProtocol(QObject):
         """
         self.sendFileAck(receiverId, stage, success, data)
 
+    def sendIdScan(self, targetId):
+        """
+        대상에게 ID 스캔 요청을 보낸다.
+        """
+        idScanPayload = [0x01]
+        self.sendData(targetId, 0, ComProtocol.CMD_ID_SCAN, idScanPayload)
+
     def send_session_sync_packet(self, receiverId: int, senderId: int) -> None:
         """
         세션 동기화를 위한 sync 패킷 전송
@@ -620,7 +647,7 @@ class ComProtocol(QObject):
             self.sync_failed.emit()
             return
 
-        self.send_session_sync_packet(0, 0)  # receiverId와 senderId는 적절히 수정
+        self.send_session_sync_packet(0xFFFF, 0)  # receiverId와 senderId는 적절히 수정
         self.sync_retry_count += 1
 
     def cleanup_sync(self):

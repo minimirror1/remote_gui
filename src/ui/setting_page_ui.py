@@ -16,15 +16,15 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QFrame, QGroupBox, QHBoxLayout,
-    QLabel, QPushButton, QScrollArea, QSizePolicy,
-    QSpinBox, QVBoxLayout, QWidget)
+    QLabel, QProgressBar, QPushButton, QScrollArea,
+    QSizePolicy, QSpinBox, QVBoxLayout, QWidget)
 import _icons_rc
 
 class Ui_SettingPage(object):
     def setupUi(self, SettingPage):
         if not SettingPage.objectName():
             SettingPage.setObjectName(u"SettingPage")
-        SettingPage.resize(640, 480)
+        SettingPage.resize(777, 525)
         self.verticalLayout = QVBoxLayout(SettingPage)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.groupBox = QGroupBox(SettingPage)
@@ -37,7 +37,7 @@ class Ui_SettingPage(object):
         self.SerialPortScrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 391, 162))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 638, 162))
         self.SerialPortScrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.horizontalLayout.addWidget(self.SerialPortScrollArea)
@@ -59,7 +59,79 @@ class Ui_SettingPage(object):
 
         self.horizontalLayout.addWidget(self.widget)
 
-        self.frame = QFrame(self.groupBox)
+
+        self.verticalLayout.addWidget(self.groupBox)
+
+        self.groupBox_2 = QGroupBox(SettingPage)
+        self.groupBox_2.setObjectName(u"groupBox_2")
+        self.horizontalLayout_2 = QHBoxLayout(self.groupBox_2)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.scrollArea = QScrollArea(self.groupBox_2)
+        self.scrollArea.setObjectName(u"scrollArea")
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollAreaWidgetContents_2 = QWidget()
+        self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 535, 263))
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents_2)
+
+        self.horizontalLayout_2.addWidget(self.scrollArea)
+
+        self.widget_2 = QWidget(self.groupBox_2)
+        self.widget_2.setObjectName(u"widget_2")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.widget_2.sizePolicy().hasHeightForWidth())
+        self.widget_2.setSizePolicy(sizePolicy)
+        self.verticalLayout_4 = QVBoxLayout(self.widget_2)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.widget_3 = QWidget(self.widget_2)
+        self.widget_3.setObjectName(u"widget_3")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.widget_3.sizePolicy().hasHeightForWidth())
+        self.widget_3.setSizePolicy(sizePolicy1)
+        self.horizontalLayout_3 = QHBoxLayout(self.widget_3)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.spinBox = QSpinBox(self.widget_3)
+        self.spinBox.setObjectName(u"spinBox")
+        self.spinBox.setValue(1)
+
+        self.horizontalLayout_3.addWidget(self.spinBox)
+
+        self.label_2 = QLabel(self.widget_3)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.horizontalLayout_3.addWidget(self.label_2)
+
+        self.spinBox_2 = QSpinBox(self.widget_3)
+        self.spinBox_2.setObjectName(u"spinBox_2")
+        self.spinBox_2.setValue(20)
+
+        self.horizontalLayout_3.addWidget(self.spinBox_2)
+
+
+        self.verticalLayout_4.addWidget(self.widget_3)
+
+        self.pushButton_3 = QPushButton(self.widget_2)
+        self.pushButton_3.setObjectName(u"pushButton_3")
+
+        self.verticalLayout_4.addWidget(self.pushButton_3)
+
+        self.progressBar = QProgressBar(self.widget_2)
+        self.progressBar.setObjectName(u"progressBar")
+        self.progressBar.setValue(0)
+
+        self.verticalLayout_4.addWidget(self.progressBar)
+
+        self.pushButton = QPushButton(self.widget_2)
+        self.pushButton.setObjectName(u"pushButton")
+
+        self.verticalLayout_4.addWidget(self.pushButton)
+
+        self.frame = QFrame(self.widget_2)
         self.frame.setObjectName(u"frame")
         self.frame.setMinimumSize(QSize(100, 0))
         self.frame.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
@@ -104,16 +176,11 @@ class Ui_SettingPage(object):
         self.verticalLayout_3.addWidget(self.sync_enable)
 
 
-        self.horizontalLayout.addWidget(self.frame)
+        self.verticalLayout_4.addWidget(self.frame)
 
 
-        self.verticalLayout.addWidget(self.groupBox)
+        self.horizontalLayout_2.addWidget(self.widget_2)
 
-        self.groupBox_2 = QGroupBox(SettingPage)
-        self.groupBox_2.setObjectName(u"groupBox_2")
-        self.pushButton_3 = QPushButton(self.groupBox_2)
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(180, 80, 75, 24))
 
         self.verticalLayout.addWidget(self.groupBox_2)
 
@@ -128,9 +195,11 @@ class Ui_SettingPage(object):
         self.groupBox.setTitle(QCoreApplication.translate("SettingPage", u"Serial Port", None))
         self.SerialRefreshButton.setText(QCoreApplication.translate("SettingPage", u"\uc0c8\ub85c\uace0\uce68", None))
         self.SerialConnectButton.setText(QCoreApplication.translate("SettingPage", u"\uc5f0\uacb0", None))
+        self.groupBox_2.setTitle(QCoreApplication.translate("SettingPage", u"Scan", None))
+        self.label_2.setText(QCoreApplication.translate("SettingPage", u"~", None))
+        self.pushButton_3.setText(QCoreApplication.translate("SettingPage", u"\uc2a4\uce94 \uc2dc\uc791", None))
+        self.pushButton.setText(QCoreApplication.translate("SettingPage", u"\uc7a5\uce58 \uc120\ud0dd", None))
         self.label.setText(QCoreApplication.translate("SettingPage", u"sync \uc8fc\uae30 (ms)", None))
         self.sync_enable.setText("")
-        self.groupBox_2.setTitle(QCoreApplication.translate("SettingPage", u"GroupBox", None))
-        self.pushButton_3.setText(QCoreApplication.translate("SettingPage", u"PushButton", None))
     # retranslateUi
 
