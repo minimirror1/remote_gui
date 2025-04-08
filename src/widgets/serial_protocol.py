@@ -3,6 +3,9 @@ import struct
 import time
 from PySide6.QtCore import QObject, Signal
 
+# 상수 직접 정의 (SerialManager 임포트 대신)
+DEFAULT_HOST_ID = 0x0000
+
 
 class FileTransferStage(enum.Enum):
     REQUEST_RECEIVE = 1    # 파일 수신 요청
@@ -334,7 +337,7 @@ class ComProtocol(QObject):
         """
         대상에게 ping 요청을 보낸다.
         """
-        self.sendData(targetId, 0, ComProtocol.CMD_PING, b'')
+        self.sendData(targetId, DEFAULT_HOST_ID, ComProtocol.CMD_PING, b'')
 
     # --- 사용자가 필요에 따라 재정의할 수 있는 핸들러들 ---
     def handlePing(self, senderId, payload):
@@ -342,7 +345,7 @@ class ComProtocol(QObject):
         ping 요청에 대한 기본 처리 (기본값: PONG 응답 전송).
         """
         print("ping 요청 수신")
-        self.sendData(senderId, 0, ComProtocol.CMD_PONG, payload)
+        self.sendData(senderId, DEFAULT_HOST_ID, ComProtocol.CMD_PONG, payload)
 
 
 
@@ -573,10 +576,10 @@ class ComProtocol(QObject):
 
     def sendFileAck(self, receiverId, stage: FileTransferStage, success, data=0):
         """
-        파일 전송 관련 응답(ACK) 패킷 전송.
-        :param receiverId: 응답을 받을 대상 ID
-        :param stage: FileTransferStage 단계
-        :param success: 성공 여부 (bool)
+        파일 전송 관련 응답 전송
+        :param receiverId: 수신자 ID
+        :param stage: 전송 단계 (FileTransferStage enum 값)
+        :param success: 성공 여부
         :param data: 추가 데이터 (예: 전송한 데이터 크기 등)
         """
         payload = bytearray()
@@ -584,7 +587,7 @@ class ComProtocol(QObject):
         payload.append(stage.value)
         payload.append(1 if success else 0)
         payload.extend(struct.pack('>I', data))
-        self.sendData(receiverId, 0, ComProtocol.CMD_FILE_RECEIVE_ACK, payload)
+        self.sendData(receiverId, DEFAULT_HOST_ID, ComProtocol.CMD_FILE_RECEIVE_ACK, payload)
 
     def calculateFileChecksum(self, data):
         """
@@ -605,8 +608,8 @@ class ComProtocol(QObject):
         """
         대상에게 ID 스캔 요청을 보낸다.
         """
-        idScanPayload = [0x01]
-        self.sendData(targetId, 0, ComProtocol.CMD_ID_SCAN, idScanPayload)
+        idScanPayload = struct.pack('>H', targetId)  # 2바이트(16비트) 변수로 패킹
+        self.sendData(targetId, DEFAULT_HOST_ID, ComProtocol.CMD_ID_SCAN, idScanPayload)
 
     def send_session_sync_packet(self, receiverId: int, senderId: int) -> None:
         """
@@ -647,7 +650,7 @@ class ComProtocol(QObject):
             self.sync_failed.emit()
             return
 
-        self.send_session_sync_packet(0xFFFF, 0)  # receiverId와 senderId는 적절히 수정
+        self.send_session_sync_packet(0xFFFF, DEFAULT_HOST_ID)
         self.sync_retry_count += 1
 
     def cleanup_sync(self):

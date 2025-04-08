@@ -32,8 +32,8 @@ class SerialCommands(QObject):
             data = bytes([1 if power_state else 0])
             
             success = self.serial_manager.send_packet(
-                receiverId=0x0001,  # 대상 장치 ID
-                senderId=0x0000,    # 호스트 ID
+                receiverId=self.serial_manager.get_target_device_id(),  # 설정된 대상 장치 ID 사용
+                senderId=SerialManager.DEFAULT_HOST_ID,  # 호스트 ID
                 cmd=ComProtocol.CMD_MAIN_POWER_CONTROL,
                 data=data
             )
@@ -58,8 +58,8 @@ class SerialCommands(QObject):
             data = bytes([play_state])
             
             success = self.serial_manager.send_packet(
-                receiverId=0x0001,  # 대상 장치 ID
-                senderId=0x0000,    # 호스트 ID
+                receiverId=self.serial_manager.get_target_device_id(),  # 설정된 대상 장치 ID 사용
+                senderId=SerialManager.DEFAULT_HOST_ID,  # 호스트 ID
                 cmd=ComProtocol.CMD_PLAY_CONTROL,
                 data=data
             )
@@ -104,8 +104,8 @@ class SerialCommands(QObject):
             
             # 명령어 코드 사용
             success = self.serial_manager.send_packet(
-                receiverId=0x0001,  # 대상 장치 ID
-                senderId=0x0000,    # 호스트 ID
+                receiverId=self.serial_manager.get_target_device_id(),  # 설정된 대상 장치 ID 사용
+                senderId=SerialManager.DEFAULT_HOST_ID,  # 호스트 ID
                 cmd=ComProtocol.CMD_JOG_MOVE_CWCCW,
                 data=bytes(data)
             )

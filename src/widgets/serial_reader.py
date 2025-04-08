@@ -64,7 +64,7 @@ class SerialReaderThread(QThread):
                                 #print(f"Serial manager: {serial_manager}, Protocol: {serial_manager.protocol if serial_manager else None}")
                                 if serial_manager and serial_manager.protocol:
                                     #print("Attempting to send sync packet...")
-                                    serial_manager.protocol.send_sync_packet(0x0001, 0x0000)
+                                    serial_manager.protocol.send_sync_packet(serial_manager.get_target_device_id(), 0x0000)
                                     #print("Sync packet sent successfully")
                         except serial.SerialTimeoutException as e:
                             #print(f"Timeout error: {str(e)}")

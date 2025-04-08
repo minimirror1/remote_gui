@@ -424,7 +424,10 @@ class SettingPage(QWidget, Ui_SettingPage):
             QMessageBox.warning(self, "경고", "장치를 선택해주세요.")
             return
             
-        # 여기서 선택된 장치 ID를 이용하여 필요한 처리를 수행
-        # 예: 장치와의 통신, 설정값 적용 등
+        # 선택된 장치 ID를 시리얼 통신의 수신자 ID로 설정
+        if self.serial_manager:
+            # SerialManager의 set_target_device_id 메서드 호출
+            self.serial_manager.set_target_device_id(selected_device_id)
+            
         QMessageBox.information(self, "장치 선택", f"장치 ID {selected_device_id}가 선택되었습니다.")
         print(f"장치 ID {selected_device_id} 선택됨")
