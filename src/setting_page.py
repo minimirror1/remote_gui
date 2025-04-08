@@ -45,11 +45,20 @@ class SettingPage(QWidget, Ui_SettingPage):
         self.ScanStartButton.clicked.connect(self.on_scan_start)
         self.SelectDeviceButton.clicked.connect(self.on_device_selected)
 
-        # 스캔 완료 이벤트 연결
-        protocol = self.serial_manager.get_protocol()
-        if protocol:
-            protocol.id_scan_received.connect(self.on_id_scan_received)
-            protocol.id_scan_received_connected = True
+        # 프로토콜 연결 상태 초기화
+        self.protocol = self.serial_manager.get_protocol()
+        if self.protocol:
+            # 초기화 시 속성 설정
+            if not hasattr(self.protocol, 'id_scan_received_connected'):
+                self.protocol.id_scan_received_connected = False
+            if not hasattr(self.protocol, 'sync_success_connected'):
+                self.protocol.sync_success_connected = False
+            if not hasattr(self.protocol, 'sync_failed_connected'):
+                self.protocol.sync_failed_connected = False
+                
+            # ID 스캔 시그널 연결
+            self.protocol.id_scan_received.connect(self.on_id_scan_received)
+            self.protocol.id_scan_received_connected = True
         
         self.refresh_ports()
 
@@ -186,20 +195,28 @@ class SettingPage(QWidget, Ui_SettingPage):
             # 연결 해제 시 동기화 정리
             if hasattr(self, 'protocol') and self.protocol:
                 self.protocol.cleanup_sync()
-                try:
-                    self.protocol.sync_success.disconnect(self.on_sync_success)
-                except:
-                    pass
+                
+                # 연결 상태 확인 후 해제
+                if hasattr(self.protocol, 'sync_success_connected') and self.protocol.sync_success_connected:
+                    try:
+                        self.protocol.sync_success.disconnect(self.on_sync_success)
+                        self.protocol.sync_success_connected = False
+                    except Exception as e:
+                        print(f"sync_success 연결 해제 실패: {e}")
                     
-                try:
-                    self.protocol.sync_failed.disconnect(self.on_sync_failed)
-                except:
-                    pass
-                    
-                try:
-                    self.protocol.id_scan_received.disconnect(self.on_id_scan_received)
-                except:
-                    pass
+                if hasattr(self.protocol, 'sync_failed_connected') and self.protocol.sync_failed_connected:
+                    try:
+                        self.protocol.sync_failed.disconnect(self.on_sync_failed)
+                        self.protocol.sync_failed_connected = False
+                    except Exception as e:
+                        print(f"sync_failed 연결 해제 실패: {e}")
+                
+                if hasattr(self.protocol, 'id_scan_received_connected') and self.protocol.id_scan_received_connected:
+                    try:
+                        self.protocol.id_scan_received.disconnect(self.on_id_scan_received)
+                        self.protocol.id_scan_received_connected = False
+                    except Exception as e:
+                        print(f"id_scan_received 연결 해제 실패: {e}")
             
             # 스캔 중이면 중지
             if self.scanning:
@@ -257,14 +274,21 @@ class SettingPage(QWidget, Ui_SettingPage):
             # ID 스캔 응답 시그널 연결 설정
             protocol = self.serial_manager.get_protocol()
             if protocol:
-                try:
-                    # 먼저 이전 연결을 분리하고
-                    protocol.id_scan_received.disconnect(self.on_id_scan_received)
-                except:
-                    pass  # 연결이 없었다면 무시
+                # 초기화 시 속성 설정 확인
+                if not hasattr(protocol, 'id_scan_received_connected'):
+                    protocol.id_scan_received_connected = False
                 
-                # 새로 연결합니다
+                # 이미 연결되어 있다면 연결 해제
+                if protocol.id_scan_received_connected:
+                    try:
+                        protocol.id_scan_received.disconnect(self.on_id_scan_received)
+                        protocol.id_scan_received_connected = False
+                    except Exception as e:
+                        print(f"id_scan_received 연결 해제 실패: {e}")
+                
+                # 새로 연결
                 protocol.id_scan_received.connect(self.on_id_scan_received)
+                protocol.id_scan_received_connected = True
         
     def hideEvent(self, event):
         """페이지가 숨겨질 때 호출"""
@@ -499,15 +523,21 @@ class SettingPage(QWidget, Ui_SettingPage):
         # 동기화 시작
         self.protocol = self.serial_manager.get_protocol()
         if self.protocol:
-            # 이전 연결이 있다면 정리
-            if hasattr(self.protocol, 'sync_success_connected') and self.protocol.sync_success_connected:
+            # 초기화 시 속성 설정 확인
+            if not hasattr(self.protocol, 'sync_success_connected'):
+                self.protocol.sync_success_connected = False
+            if not hasattr(self.protocol, 'sync_failed_connected'):
+                self.protocol.sync_failed_connected = False
+            
+            # 이전 연결 해제
+            if self.protocol.sync_success_connected:
                 try:
                     self.protocol.sync_success.disconnect(self.on_sync_success)
                     self.protocol.sync_success_connected = False
                 except Exception as e:
                     print(f"sync_success 연결 해제 실패: {e}")
                 
-            if hasattr(self.protocol, 'sync_failed_connected') and self.protocol.sync_failed_connected:
+            if self.protocol.sync_failed_connected:
                 try:
                     self.protocol.sync_failed.disconnect(self.on_sync_failed)
                     self.protocol.sync_failed_connected = False
