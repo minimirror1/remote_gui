@@ -473,14 +473,14 @@ class ComProtocol(QObject):
     def handleIdScanAck(self, senderId, payload):
         """
         ID 스캔 응답 패킷에 대한 처리.
-        페이로드의 첫 번째 바이트에서 응답 장치의 ID를 추출하고 시그널을 발생시킨다.
+        페이로드의 처음 2바이트에서 응답 장치의 ID를 추출하고 시그널을 발생시킨다.
         """
-        if len(payload) >= 1:
-            device_id = payload[0]
+        if len(payload) >= 2:
+            device_id = (payload[1] << 8) | payload[0]  # 2바이트 ID 구성 (상위 바이트, 하위 바이트)
             print(f"ID Scan Ack Received from {senderId}. Device ID: {device_id}")
             self.id_scan_received.emit(device_id)  # 수신된 ID를 시그널로 전달
         else:
-            print("ID Scan Ack Received with empty payload.")
+            print("ID Scan Ack Received with invalid payload length (2 bytes required).")
 
     def handlePlayControlAck(self, senderId, payload):
         """재생 제어 응답 처리"""
