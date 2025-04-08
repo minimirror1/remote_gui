@@ -73,7 +73,7 @@
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
-       <widget class="QScrollArea" name="scrollArea">
+       <widget class="QScrollArea" name="DevieceScrollArea">
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
@@ -108,7 +108,7 @@
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
-             <widget class="QSpinBox" name="spinBox">
+             <widget class="QSpinBox" name="ScanIdStartspinBox">
               <property name="value">
                <number>1</number>
               </property>
@@ -125,7 +125,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QSpinBox" name="spinBox_2">
+             <widget class="QSpinBox" name="ScanIdEndSpinBox">
               <property name="value">
                <number>20</number>
               </property>
@@ -135,21 +135,21 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="ScanStartButton">
            <property name="text">
             <string>스캔 시작</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QProgressBar" name="progressBar">
+          <widget class="QProgressBar" name="ScanProgressBar">
            <property name="value">
             <number>0</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="SelectDeviceButton">
            <property name="text">
             <string>장치 선택</string>
            </property>
