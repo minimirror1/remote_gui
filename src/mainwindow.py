@@ -11,11 +11,15 @@ from src.help_page import HelpPage  # HelpPage UI 클래스 import 추가
 
 import _icons_rc  # 수정된 import 경로
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, Slot
 import logging
 from PySide6.QtCore import QThread
 from src.serial_manager import SerialManager
 from PySide6.QtCore import QTimer
+
+# API 관련 임포트 추가
+from src.api.api_manager import ApiManager
+from src.api.sse_manager import SSEManager  # SSE 매니저 추가
 
 
 class MainWindow(QMainWindow):
@@ -36,6 +40,22 @@ class MainWindow(QMainWindow):
         # SerialManager 인스턴스 가져오기
         self.serial_manager = SerialManager.get_instance()
         self.serial_manager.set_main_window(self)  # MainWindow 참조 설정
+        
+        # API 매니저 인스턴스 가져오기
+        self.api_manager = ApiManager.get_instance()
+        
+        # API 시그널 연결
+        self.api_manager.request_completed.connect(self.handle_api_response)
+        self.api_manager.request_error.connect(self.handle_api_error)
+        
+        # SSE 매니저 인스턴스 가져오기
+        self.sse_manager = SSEManager.get_instance()
+        
+        # SSE 시그널 연결
+        self.sse_manager.event_received.connect(self.handle_sse_event)
+        self.sse_manager.connection_error.connect(self.handle_sse_error)
+        self.sse_manager.connection_established.connect(self.handle_sse_connected)
+        self.sse_manager.connection_closed.connect(self.handle_sse_disconnected)
         
         # 스레드 초기화
         self.serial_thread = SerialReaderThread()
@@ -83,6 +103,9 @@ class MainWindow(QMainWindow):
         
         # 초기 LED 상태 설정
         self.init_ui()
+        
+        # SSE 연결 설정 및 시작
+        self.init_sse_connection()
 
     def init_ui(self):
         """
@@ -131,6 +154,60 @@ class MainWindow(QMainWindow):
         self.ui.labelTx.setStyleSheet(self.LED_OFF_STYLE)
         self.ui.labelRx.setStyleSheet(self.LED_OFF_STYLE)
 
+    def init_sse_connection(self):
+        """SSE 연결 초기화 및 시작"""
+        # SSE 연결 설정
+        self.sse_manager.configure(
+            url="https://robot-monitor-dev.systemiic.com/v1/service/stores/event-sources",
+            store_id="store123",  # 실제 상점 ID로 변경
+            params={"pcId": "pc1"},  # 실제 PC ID로 변경
+            headers={"Authorization": "Bearer your-token-here"}  # 실제 인증 토큰으로 변경
+        )
+        
+        # 특정 이벤트 타입에 대한 핸들러 등록 (선택사항)
+        self.sse_manager.register_handler("sse", self.handle_sse_event_data)
+        self.sse_manager.register_handler("message", self.handle_message_event_data)
+        
+        # SSE 연결 시작
+        self.sse_manager.start()
+        self.logger.info("SSE 연결이 시작되었습니다.")
+
+    @Slot(dict)
+    def handle_sse_event_data(self, data):
+        """SSE 이벤트 데이터 처리"""
+        self.logger.info(f"SSE 이벤트 처리: {data}")
+        # 여기에 SSE 이벤트 처리 로직 구현
+    
+    @Slot(dict)
+    def handle_message_event_data(self, data):
+        """메시지 이벤트 데이터 처리"""
+        self.logger.info(f"메시지 이벤트 처리: {data}")
+        # 여기에 메시지 이벤트 처리 로직 구현
+
+    @Slot(str, dict)
+    def handle_sse_event(self, event_type, data):
+        """SSE 이벤트 수신 처리"""
+        self.logger.info(f"SSE 이벤트 수신: 타입={event_type}, 데이터={data}")
+        # 이벤트 타입에 따른 처리 로직
+    
+    @Slot()
+    def handle_sse_connected(self):
+        """SSE 연결 성공 처리"""
+        self.logger.info("SSE 서버에 연결되었습니다.")
+        # 로그만 남기고 추가 동작은 하지 않습니다.
+    
+    @Slot(str)
+    def handle_sse_error(self, error_msg):
+        """SSE 연결 오류 처리"""
+        self.logger.error(f"SSE 연결 오류: {error_msg}")
+        # 오류 처리 로직 (재연결 시도, 사용자에게 알림 등)
+    
+    @Slot()
+    def handle_sse_disconnected(self):
+        """SSE 연결 종료 처리"""
+        self.logger.info("SSE 연결이 종료되었습니다.")
+        # 연결 종료 처리 로직
+    
     def toggle_maximize_restore(self):
         if self.isMaximized():
             self.showNormal()
@@ -175,12 +252,21 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """프로그램 종료 시 정리 작업"""
+        # SSE 연결 종료
+        self.sse_manager.stop()
+        
+        # 시리얼 연결 종료
         self.serial_manager.stop_serial_thread()
         super().closeEvent(event)
 
     def __del__(self):
         """소멸자"""
         try:
+            # SSE 연결 정리
+            if hasattr(self, 'sse_manager'):
+                self.sse_manager.stop()
+                
+            # 시리얼 연결 정리
             if hasattr(self, 'serial_thread'):
                 self.serial_thread.stop()
                 self.serial_thread.wait()
@@ -206,6 +292,16 @@ class MainWindow(QMainWindow):
         """RX LED 끄기"""
         self.ui.labelRx.setStyleSheet(self.LED_OFF_STYLE)
         self.rx_timer.stop()
+
+    def handle_api_response(self, data):
+        """API 응답 처리"""
+        self.logger.info(f"API 응답 데이터: {data}")
+        # 응답 처리 로직 구현
+
+    def handle_api_error(self, error_msg):
+        """API 에러 처리"""
+        self.logger.error(f"API 오류: {error_msg}")
+        # 에러 처리 로직 구현
 
 
 class SerialReaderThread(QThread):
