@@ -16,6 +16,7 @@ import logging
 from PySide6.QtCore import QThread
 from src.serial_manager import SerialManager
 from PySide6.QtCore import QTimer
+import json
 
 # API 관련 임포트 추가
 from src.api.api_manager import ApiManager
@@ -188,7 +189,67 @@ class MainWindow(QMainWindow):
     def handle_sse_event(self, event_type, data):
         """SSE 이벤트 수신 처리"""
         self.logger.info(f"SSE 이벤트 수신: 타입={event_type}, 데이터={data}")
+        
         # 이벤트 타입에 따른 처리 로직
+        if event_type == 'sse':
+            # SSE 이벤트 처리
+            self._handle_sse_command(data)
+        elif event_type == 'message':
+            # 일반 메시지 처리
+            self._handle_message(data)
+        elif event_type == 'control':
+            # 제어 명령 처리
+            self._handle_control_command(data)
+        else:
+            self.logger.debug(f"처리되지 않은 이벤트 타입: {event_type}")
+    
+    def _handle_sse_command(self, data):
+        """SSE 명령 이벤트 처리"""
+        try:
+            # 데이터 형식 확인 (JSON 문자열인 경우 파싱)
+            if isinstance(data.get('data'), str):
+                command_data = json.loads(data.get('data', '{}'))
+            else:
+                command_data = data.get('data', {})
+                
+            store_id = command_data.get('storeId')
+            object_id = command_data.get('objectId')
+            event = command_data.get('event')
+            
+            if event == 'ON':
+                self.logger.info(f"전원 ON 명령 수신: 객체 ID={object_id}")
+                # 실제 디바이스 전원 켜기 로직 구현
+                # 예: self.device_controller.turn_on(object_id)
+                
+            elif event == 'OFF':
+                self.logger.info(f"전원 OFF 명령 수신: 객체 ID={object_id}")
+                # 실제 디바이스 전원 끄기 로직 구현
+                # 예: self.device_controller.turn_off(object_id)
+                
+            elif event == 'REBOOT':
+                self.logger.info(f"재부팅 명령 수신: 객체 ID={object_id}")
+                # 실제 디바이스 재부팅 로직 구현
+                # 예: self.device_controller.reboot(object_id)
+                
+            else:
+                self.logger.info(f"알 수 없는 명령 수신: {event}, 객체 ID={object_id}")
+                
+        except json.JSONDecodeError:
+            self.logger.warning(f"SSE 명령 데이터 파싱 오류: {data}")
+        except Exception as e:
+            self.logger.error(f"SSE 명령 처리 중 오류 발생: {str(e)}")
+    
+    def _handle_message(self, data):
+        """일반 메시지 이벤트 처리"""
+        self.logger.info(f"메시지 이벤트 처리: {data}")
+        # 메시지 처리 로직 구현
+        # 예: self.ui.update_status_message(data.get('message'))
+    
+    def _handle_control_command(self, data):
+        """제어 명령 이벤트 처리"""
+        self.logger.info(f"제어 명령 처리: {data}")
+        # 제어 명령 처리 로직 구현
+        # 예: self.robot_controller.execute_command(data)
     
     @Slot()
     def handle_sse_connected(self):
