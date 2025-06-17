@@ -37,7 +37,7 @@
            <x>0</x>
            <y>0</y>
            <width>535</width>
-           <height>162</height>
+           <height>144</height>
           </rect>
          </property>
         </widget>
@@ -95,7 +95,7 @@
            <x>0</x>
            <y>0</y>
            <width>535</width>
-           <height>263</height>
+           <height>281</height>
           </rect>
          </property>
         </widget>
@@ -161,9 +161,16 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="AllMonitorModeButton">
+           <property name="text">
+            <string>전체 모니터링 모드</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="SelectDeviceButton">
            <property name="text">
-            <string>장치 선택</string>
+            <string>단일 연결 모드</string>
            </property>
           </widget>
          </item>

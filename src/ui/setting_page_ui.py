@@ -37,7 +37,7 @@ class Ui_SettingPage(object):
         self.SerialPortScrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 535, 162))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 535, 144))
         self.SerialPortScrollArea.setWidget(self.scrollAreaWidgetContents)
 
         self.horizontalLayout.addWidget(self.SerialPortScrollArea)
@@ -77,7 +77,7 @@ class Ui_SettingPage(object):
         self.DevieceScrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
-        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 535, 263))
+        self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 535, 281))
         self.DevieceScrollArea.setWidget(self.scrollAreaWidgetContents_2)
 
         self.horizontalLayout_2.addWidget(self.DevieceScrollArea)
@@ -128,6 +128,11 @@ class Ui_SettingPage(object):
         self.ScanProgressBar.setValue(0)
 
         self.verticalLayout_4.addWidget(self.ScanProgressBar)
+
+        self.AllMonitorModeButton = QPushButton(self.widget_2)
+        self.AllMonitorModeButton.setObjectName(u"AllMonitorModeButton")
+
+        self.verticalLayout_4.addWidget(self.AllMonitorModeButton)
 
         self.SelectDeviceButton = QPushButton(self.widget_2)
         self.SelectDeviceButton.setObjectName(u"SelectDeviceButton")
@@ -201,7 +206,8 @@ class Ui_SettingPage(object):
         self.groupBox_2.setTitle(QCoreApplication.translate("SettingPage", u"Scan", None))
         self.label_2.setText(QCoreApplication.translate("SettingPage", u"~", None))
         self.ScanStartButton.setText(QCoreApplication.translate("SettingPage", u"\uc2a4\uce94 \uc2dc\uc791", None))
-        self.SelectDeviceButton.setText(QCoreApplication.translate("SettingPage", u"\uc7a5\uce58 \uc120\ud0dd", None))
+        self.AllMonitorModeButton.setText(QCoreApplication.translate("SettingPage", u"\uc804\uccb4 \ubaa8\ub2c8\ud130\ub9c1 \ubaa8\ub4dc", None))
+        self.SelectDeviceButton.setText(QCoreApplication.translate("SettingPage", u"\ub2e8\uc77c \uc5f0\uacb0 \ubaa8\ub4dc", None))
         self.label.setText(QCoreApplication.translate("SettingPage", u"sync \uc8fc\uae30 (ms)", None))
         self.sync_enable.setText("")
     # retranslateUi

@@ -28,12 +28,18 @@ class SettingPage(QWidget, Ui_SettingPage):
         self.found_devices = []  # 발견된 장치 목록
         self.device_buttons = []  # 장치 라디오 버튼 목록
         
+        # 전체 모니터링 모드 관련 변수 초기화
+        self.all_monitor_timer = None
+        self.current_device_index = 0
+        self.is_all_monitor_mode = False
+        
         # 초기에 버튼 비활성화
         self.ScanStartButton.setEnabled(False)
         self.SelectDeviceButton.setEnabled(False)
         self.ScanIdStartspinBox.setEnabled(False)
         self.ScanIdEndSpinBox.setEnabled(False)
         self.sync_enable.setEnabled(False)
+        self.AllMonitorModeButton.setEnabled(False)
                
         # 시그널 연결
         self.SerialRefreshButton.clicked.connect(self.refresh_ports)
@@ -44,6 +50,7 @@ class SettingPage(QWidget, Ui_SettingPage):
         self.sync_ms_spinBox.valueChanged.connect(self._on_sync_interval_changed)
         self.ScanStartButton.clicked.connect(self.on_scan_start)
         self.SelectDeviceButton.clicked.connect(self.on_device_selected)
+        self.AllMonitorModeButton.clicked.connect(self.on_all_monitor_selected)
 
         # 프로토콜 연결 상태 초기화
         self.protocol = self.serial_manager.get_protocol()
@@ -107,6 +114,8 @@ class SettingPage(QWidget, Ui_SettingPage):
                 self.serial_manager.error_occurred.disconnect(self._show_error)
             except Exception as e:
                 print(f"error_occurred 연결 해제 실패: {e}")
+
+        self.stop_all_monitor_mode()
 
     @Slot()
     def refresh_ports(self):
@@ -181,6 +190,7 @@ class SettingPage(QWidget, Ui_SettingPage):
         self.SelectDeviceButton.setEnabled(is_connected)
         self.ScanIdStartspinBox.setEnabled(is_connected)
         self.ScanIdEndSpinBox.setEnabled(is_connected)
+        self.AllMonitorModeButton.setEnabled(is_connected)
         
         print(f"sync_enable 버튼 활성화 상태: {is_connected}")
         
@@ -555,3 +565,57 @@ class SettingPage(QWidget, Ui_SettingPage):
         
         QMessageBox.information(self, "장치 선택", f"장치 ID {selected_device_id}가 선택되었습니다.")
         print(f"장치 ID {selected_device_id} 선택됨")
+
+    @Slot()
+    def on_all_monitor_selected(self):
+        """모든 모니터 선택 처리"""
+        if not self.serial_manager.is_port_connected():
+            QMessageBox.warning(self, "경고", "시리얼 포트에 연결되어 있지 않습니다.")
+            return
+            
+        if not self.found_devices:
+            QMessageBox.warning(self, "경고", "스캔된 장치가 없습니다. 먼저 장치를 스캔해주세요.")
+            return
+            
+        if self.is_all_monitor_mode:
+            # 전체 모니터링 모드 종료
+            self.stop_all_monitor_mode()
+            self.AllMonitorModeButton.setText("전체 모니터링 모드")
+        else:
+            # 전체 모니터링 모드 시작
+            self.start_all_monitor_mode()
+            self.AllMonitorModeButton.setText("모니터링 중지")
+            
+    def start_all_monitor_mode(self):
+        """전체 모니터링 모드 시작"""
+        self.is_all_monitor_mode = True
+        self.current_device_index = 0
+        
+        # 현재 sync 주기의 2배로 타이머 설정
+        sync_interval = self.sync_ms_spinBox.value() * 2
+        
+        if self.all_monitor_timer is None:
+            self.all_monitor_timer = QTimer()
+            self.all_monitor_timer.timeout.connect(self.cycle_next_device)
+            
+        self.all_monitor_timer.start(sync_interval)
+        self.cycle_next_device()  # 첫 번째 장치 즉시 선택
+        
+    def stop_all_monitor_mode(self):
+        """전체 모니터링 모드 종료"""
+        self.is_all_monitor_mode = False
+        if self.all_monitor_timer:
+            self.all_monitor_timer.stop()
+            
+    def cycle_next_device(self):
+        """다음 장치로 순환"""
+        if not self.is_all_monitor_mode or not self.found_devices:
+            return
+            
+        # 현재 장치 ID 설정
+        device_id = self.found_devices[self.current_device_index]
+        self.serial_manager.set_target_device_id(device_id)
+        print(f"전체 모니터링 모드: 장치 ID {device_id} 선택됨")
+        
+        # 다음 장치 인덱스 계산
+        self.current_device_index = (self.current_device_index + 1) % len(self.found_devices)
