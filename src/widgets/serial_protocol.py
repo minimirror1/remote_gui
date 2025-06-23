@@ -412,8 +412,9 @@ class ComProtocol(QObject):
                 if payload[i] != 0:  # null 문자가 아닌 경우에만 추가
                     error_code_str += chr(payload[i])
 
-            # 데이터를 딕셔너리로 구성
+            # 데이터를 딕셔너리로 구성 (장치 ID 포함)
             status_data = {
+                'device_id': senderId,  # 응답을 보낸 장치의 ID 추가
                 'main_power': {
                     'status': main_power_status
                 },

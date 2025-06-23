@@ -371,38 +371,39 @@ class MonitorPage(QWidget, Ui_Form):
     @Slot(dict)
     def on_status_sync_changed(self, status_data: dict):
         """상태 동기화 시그널 처리 - 장치 ID별로 데이터 분리 처리"""
-        # 상태 데이터에서 장치 ID 추출
+        # 상태 데이터에서 장치 ID 추출 (protocol에서 직접 전달됨)
         device_id = status_data.get('device_id')
         
+        # 디버깅: 수신된 데이터 정보 출력
+        print(f"=== 상태 데이터 수신 ===")
+        print(f"device_id: {device_id} (타입: {type(device_id)})")
+        print(f"등록된 장치 위젯: {list(self.device_widgets.keys())} (타입: {[type(k) for k in self.device_widgets.keys()]})")
+        
         if device_id is not None:
-            # ID가 있는 경우: 해당 장치의 상태 데이터로 업데이트
-            self.device_status_data[device_id] = status_data
-            
-            # 해당 장치 위젯 업데이트
-            if device_id in self.device_widgets:
-                self.device_widgets[device_id].update_status(status_data)
-            
-            # 시그널 발생
-            self.device_status_updated.emit(str(device_id), status_data)
-            print(f"장치 ID {device_id} 상태 업데이트")
-            
+            # device_id 타입 통일 (int로 변환)
+            try:
+                device_id = int(device_id)
+                status_data['device_id'] = device_id  # 변환된 값으로 업데이트
+            except (ValueError, TypeError):
+                print(f"device_id 타입 변환 실패: {device_id}")
+                return  # device_id가 유효하지 않으면 처리하지 않음
         else:
-            # ID가 없는 경우: 기존 방식으로 첫 번째 장치에 적용 (하위 호환성)
-            if self.monitored_devices:
-                device = self.monitored_devices[0]
-                fallback_device_id = device.get('id', device.get('port', 'unknown'))
-                
-                # status_data에 device_id 추가
-                status_data['device_id'] = fallback_device_id
-                self.device_status_data[fallback_device_id] = status_data
-                
-                # UI 업데이트
-                if fallback_device_id in self.device_widgets:
-                    self.device_widgets[fallback_device_id].update_status(status_data)
-                    
-                # 시그널 발생
-                self.device_status_updated.emit(str(fallback_device_id), status_data)
-                print(f"장치 ID 없음 - 기본 장치 {fallback_device_id}에 적용")
+            print("⚠ device_id가 없음 - 상태 데이터 무시")
+            return  # device_id가 없으면 처리하지 않음
+        
+        # 해당 장치의 상태 데이터로 업데이트
+        self.device_status_data[device_id] = status_data
+        
+        # 해당 장치 위젯 업데이트
+        if device_id in self.device_widgets:
+            self.device_widgets[device_id].update_status(status_data)
+            print(f"✓ 장치 ID {device_id} 위젯 업데이트 성공")
+        else:
+            print(f"✗ 장치 ID {device_id} 위젯을 찾을 수 없음")
+            print(f"  등록된 위젯 키: {list(self.device_widgets.keys())}")
+        
+        # 시그널 발생
+        self.device_status_updated.emit(str(device_id), status_data)
 
     def set_monitored_devices(self, devices):
         """모니터링할 장치 목록 설정 (setting_page에서 호출)"""
@@ -420,7 +421,15 @@ class MonitorPage(QWidget, Ui_Form):
         """Setting 페이지에서 스캔된 장치 ID 목록을 받아서 모니터링 장치로 설정"""
         devices = []
         
+        print(f"스캔된 장치 ID 목록 수신: {scanned_device_ids} (타입: {[type(x) for x in scanned_device_ids]})")
+        
         for device_id in scanned_device_ids:
+            # device_id가 이미 int인지 확인하고, 아니면 변환
+            try:
+                device_id = int(device_id)
+            except (ValueError, TypeError):
+                print(f"device_id 타입 변환 실패 (set_scanned_devices): {device_id}")
+                
             device_info = {
                 'id': device_id,  # 스캔된 실제 장치 ID (숫자)
                 'name': f"Robot Device {device_id}",
@@ -431,11 +440,19 @@ class MonitorPage(QWidget, Ui_Form):
             devices.append(device_info)
             
         self.set_monitored_devices(devices)
-        print(f"스캔된 장치 설정: {scanned_device_ids}")
+        print(f"스캔된 장치 설정 완료: {[d['id'] for d in devices]}")
 
     def add_device_widget(self, device_info):
         """장치 위젯을 동적으로 추가 - HBoxLayout으로 2열 배치"""
         device_id = device_info.get('id', device_info.get('port', 'unknown'))
+        
+        # device_id를 int 타입으로 통일
+        try:
+            device_id = int(device_id)
+        except (ValueError, TypeError):
+            print(f"device_id 타입 변환 실패 (add_device_widget): {device_id}")
+        
+        print(f"장치 위젯 생성: device_id={device_id} (타입: {type(device_id)})")
         
         # 기존 위젯이 있으면 제거
         if device_id in self.device_widgets:
@@ -561,7 +578,7 @@ class MonitorPage(QWidget, Ui_Form):
                 'status': 'connected'
             }
             
-            print(f"기본 장치 생성: {device_info}")
+            print(f"기본 장치 생성: {device_info} (ID 타입: {type(port_number)})")
             self.set_monitored_devices([device_info])
         else:
             print("연결된 포트 정보를 찾을 수 없습니다.")
