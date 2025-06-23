@@ -69,6 +69,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_7.addWidget(self.HomeButton)
 
+        self.monitorButton = QPushButton(self.verticalFrame)
+        self.monitorButton.setObjectName(u"monitorButton")
+
+        self.verticalLayout_7.addWidget(self.monitorButton)
+
         self.PlayButton = QPushButton(self.verticalFrame)
         self.PlayButton.setObjectName(u"PlayButton")
 
@@ -223,6 +228,7 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.menuButton.setText("")
         self.HomeButton.setText(QCoreApplication.translate("MainWindow", u"Home", None))
+        self.monitorButton.setText(QCoreApplication.translate("MainWindow", u"Monitor", None))
         self.PlayButton.setText(QCoreApplication.translate("MainWindow", u"Play", None))
         self.jogButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
         self.SettingButton.setText(QCoreApplication.translate("MainWindow", u"Setting", None))

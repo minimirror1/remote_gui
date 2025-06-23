@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt  # Qt 플래그를 사용하기 위해 추가
 
 from src.ui.mainwindow_ui import Ui_MainWindow  # Designer에서 uic로 생성된 UI 클래스
 from src.home_page import HomePage  # HomePage UI 클래스 import 추가
+from src.monitor_page import MonitorPage  # MonitorPage UI 클래스 import 추가
 from src.jog_page import JogPage  # JogPage UI 클래스 import 추가
 from src.setting_page import SettingPage  # SettingPage UI 클래스 import 추가
 from src.help_page import HelpPage  # HelpPage UI 클래스 import 추가
@@ -117,6 +118,10 @@ class MainWindow(QMainWindow):
         self.home_page = HomePage()
         self.ui.mainPage.addWidget(self.home_page)
 
+        # MonitorPage UI 초기화
+        self.monitor_page = MonitorPage()
+        self.ui.mainPage.addWidget(self.monitor_page)
+
         # JogPage UI 초기화
         self.jog_page = JogPage()
         self.ui.mainPage.addWidget(self.jog_page)
@@ -128,6 +133,9 @@ class MainWindow(QMainWindow):
         # HelpPage UI 초기화
         self.help_page = HelpPage()
         self.ui.mainPage.addWidget(self.help_page)
+        
+        # 페이지 간 데이터 연결 설정
+        self._connect_page_signals()
         
         # 창 제어 버튼 시그널 연결
         if hasattr(self.ui, 'closeBtn'):
@@ -142,10 +150,11 @@ class MainWindow(QMainWindow):
             
         # 페이지 전환 버튼 시그널 연결        
         self.ui.HomeButton.clicked.connect(lambda: self.change_page(0))  # HomePage
+        self.ui.monitorButton.clicked.connect(lambda: self.change_page(1))  # MonitorPage
         self.ui.PlayButton.clicked.connect(lambda: self.change_page(0))  # PlayPage
-        self.ui.jogButton.clicked.connect(lambda: self.change_page(1))   # JogPage
-        self.ui.SettingButton.clicked.connect(lambda: self.change_page(2))  # SettingPage
-        self.ui.HelpButton.clicked.connect(lambda: self.change_page(3))  # HelpPage
+        self.ui.jogButton.clicked.connect(lambda: self.change_page(2))   # JogPage
+        self.ui.SettingButton.clicked.connect(lambda: self.change_page(3))  # SettingPage
+        self.ui.HelpButton.clicked.connect(lambda: self.change_page(4))  # HelpPage
 
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)
@@ -154,6 +163,13 @@ class MainWindow(QMainWindow):
         # LED 초기 스타일 설정
         self.ui.labelTx.setStyleSheet(self.LED_OFF_STYLE)
         self.ui.labelRx.setStyleSheet(self.LED_OFF_STYLE)
+
+    def _connect_page_signals(self):
+        """페이지 간 시그널 연결"""
+        # SettingPage에서 장치가 선택되었을 때, MonitorPage에 전달
+        if hasattr(self.setting_page, 'device_selected') and hasattr(self.monitor_page, 'set_monitored_devices'):
+            # SettingPage의 found_devices를 MonitorPage로 전달하는 로직 추가
+            pass  # 실제 구현은 SettingPage 구조를 더 확인한 후 진행
 
     def init_sse_connection(self):
         """SSE 연결 초기화 및 시작"""
