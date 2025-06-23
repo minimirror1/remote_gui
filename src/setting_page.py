@@ -463,6 +463,21 @@ class SettingPage(QWidget, Ui_SettingPage):
         self.ScanStartButton.setText("스캔 시작")
         self.ScanProgressBar.setValue(100)  # 진행률 100%로 설정
         
+        # 스캔 완료 시 Monitor 페이지에 알림
+        if self.found_devices:
+            self._notify_scan_completed()
+            
+    def _notify_scan_completed(self):
+        """스캔 완료를 Monitor 페이지에 알림"""
+        # 메인 윈도우를 통해 Monitor 페이지에 스캔 결과 전달
+        main_window = self.parent()
+        while main_window and not hasattr(main_window, 'transfer_scanned_devices_to_monitor'):
+            main_window = main_window.parent()
+            
+        if main_window:
+            main_window.transfer_scanned_devices_to_monitor()
+            print(f"스캔 완료 - 발견된 장치: {self.found_devices}")
+        
     @Slot(int)
     def on_id_scan_received(self, device_id):
         """ID 스캔 응답 수신 처리"""

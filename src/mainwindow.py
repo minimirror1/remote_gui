@@ -166,10 +166,21 @@ class MainWindow(QMainWindow):
 
     def _connect_page_signals(self):
         """페이지 간 시그널 연결"""
-        # SettingPage에서 장치가 선택되었을 때, MonitorPage에 전달
-        if hasattr(self.setting_page, 'device_selected') and hasattr(self.monitor_page, 'set_monitored_devices'):
-            # SettingPage의 found_devices를 MonitorPage로 전달하는 로직 추가
-            pass  # 실제 구현은 SettingPage 구조를 더 확인한 후 진행
+        # SettingPage에서 장치 스캔이 완료되었을 때 MonitorPage로 장치 목록 전달
+        # 현재는 수동으로 전달하는 메서드 추가 (추후 시그널로 변경 가능)
+        pass
+        
+    def transfer_scanned_devices_to_monitor(self):
+        """Setting 페이지에서 스캔된 장치들을 Monitor 페이지로 전달"""
+        if hasattr(self.setting_page, 'found_devices') and self.setting_page.found_devices:
+            # 스캔된 장치 ID 목록을 Monitor 페이지로 전달
+            scanned_ids = self.setting_page.found_devices.copy()
+            self.monitor_page.set_scanned_devices(scanned_ids)
+            print(f"스캔된 장치 {len(scanned_ids)}개를 Monitor 페이지로 전달: {scanned_ids}")
+            return True
+        else:
+            print("스캔된 장치가 없습니다.")
+            return False
 
     def init_sse_connection(self):
         """SSE 연결 초기화 및 시작"""
