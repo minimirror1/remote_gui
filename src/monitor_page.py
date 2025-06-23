@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (QWidget, QMessageBox, QFrame, QVBoxLayout, 
-                               QHBoxLayout, QLabel, QPushButton, QProgressBar)
+                               QHBoxLayout, QGridLayout, QLabel, QPushButton, QProgressBar)
 from PySide6.QtCore import Slot, QTimer, Signal, QDateTime
 from PySide6.QtGui import QFont, QPixmap
 
@@ -17,8 +17,8 @@ class DeviceInfoWidget(QFrame):
         self.device_info = device_info
         
         # 폰트 크기 설정
-        self.name_font_size = 12  # 장치 이름 전용 폰트 크기
-        self.default_font_size = 10  # 모든 다른 라벨의 폰트 크기
+        self.name_font_size = 10  # 장치 이름 전용 폰트 크기
+        self.default_font_size = 9  # 모든 다른 라벨의 폰트 크기
         
         # LED 이미지 로드
         self.led_on = QPixmap(u":/font_awesome_solid/icons/user/status_led_g.png")
@@ -30,6 +30,14 @@ class DeviceInfoWidget(QFrame):
         """장치 정보 위젯 UI 설정"""
         self.setFrameStyle(QFrame.Shape.StyledPanel)
         self.setFrameShadow(QFrame.Shadow.Raised)
+        
+        # 너비를 상위 요소의 절반 정도로 설정 (마진, 스페이싱 고려)
+        # 상위 컨테이너 마진: 20px (좌우 각 10px)
+        # 장치 간 스페이싱: 10px 
+        # 따라서 실제 사용 가능한 너비의 절반에서 스페이싱/2를 뺀 값
+        self.setMinimumWidth(350)  # 최소 너비 설정
+        self.setMaximumWidth(450)  # 최대 너비 설정
+        
         self.setStyleSheet("""
             QFrame {
                 border: 2px solid #ddd;
@@ -82,50 +90,44 @@ class DeviceInfoWidget(QFrame):
         power_layout.addWidget(power_text)
         power_layout.addStretch()
         
-        info_layout.addWidget(name_label)
-        info_layout.addWidget(id_label)
-        info_layout.addWidget(self.motion_status_label)
-        info_layout.addLayout(power_layout)
-        
-        # 가운데: 상세 정보
-        detail_layout = QVBoxLayout()
-        detail_layout.setSpacing(1)
-        
         # 연속구동시간
         self.runtime_label = QLabel("Runtime: 00h00m00s")
         self.runtime_label.setStyleSheet(f"color: #555; font-size: {self.default_font_size}px;")
-        
-        # 회차 정보
-        self.round_label = QLabel("Round: 0/0")
-        self.round_label.setStyleSheet(f"color: #555; font-size: {self.default_font_size}px;")
         
         # 전력 정보
         self.energy_label = QLabel("Power: 0.0V / 0.0A / 0.0W")
         self.energy_label.setStyleSheet(f"color: #555; font-size: {self.default_font_size}px;")
         
+        info_layout.addWidget(name_label)
+        info_layout.addWidget(id_label)
+        info_layout.addLayout(power_layout)
+        info_layout.addWidget(self.runtime_label)
+        info_layout.addWidget(self.energy_label)
+        
+        # 가운데: 상세 정보
+        detail_layout = QVBoxLayout()
+        detail_layout.setSpacing(1)
+        
+        # 모션 상태 (info_layout에서 이동)
+        detail_layout.addWidget(self.motion_status_label)
+        
+        # 회차 정보
+        self.round_label = QLabel("Round: 0/0")
+        self.round_label.setStyleSheet(f"color: #555; font-size: {self.default_font_size}px;")
+        
         # 에러 정보
         self.error_label = QLabel("Error: 정상")
         self.error_label.setStyleSheet(f"color: green; font-size: {self.default_font_size}px;")
         
-        detail_layout.addWidget(self.runtime_label)
-        detail_layout.addWidget(self.round_label)
-        detail_layout.addWidget(self.energy_label)
-        detail_layout.addWidget(self.error_label)
-        detail_layout.addStretch()
-        
-        # 오른쪽: 모션 시간 정보
-        motion_layout = QVBoxLayout()
-        motion_layout.setSpacing(1)
-        
-        # 모션 시간 정보
+        # 모션 시간 정보 (motion_layout에서 이동)
         self.motion_time_label = QLabel("Time: 00:00:000 / 00:00:000")
         self.motion_time_label.setStyleSheet(f"color: #333; font-size: {self.default_font_size}px;")
         
-        # 진행률 바
+        # 진행률 바 (motion_layout에서 이동)
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
-        self.progress_bar.setMaximumHeight(6)
+        self.progress_bar.setMaximumHeight(10)
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: 1px solid #ccc;
@@ -138,18 +140,19 @@ class DeviceInfoWidget(QFrame):
             }
         """)
         
-        # 마지막 업데이트 시간
+        # 마지막 업데이트 시간 (motion_layout에서 이동)
         self.last_update_label = QLabel("Last Update: Never")
         self.last_update_label.setStyleSheet(f"color: #888; font-size: {self.default_font_size}px;")
         
-        motion_layout.addWidget(self.motion_time_label)
-        motion_layout.addWidget(self.progress_bar)
-        motion_layout.addWidget(self.last_update_label)
-        motion_layout.addStretch()
+        detail_layout.addWidget(self.round_label)
+        detail_layout.addWidget(self.error_label)
+        detail_layout.addWidget(self.motion_time_label)
+        detail_layout.addWidget(self.progress_bar)
+        detail_layout.addWidget(self.last_update_label)
+        detail_layout.addStretch()
         
-        main_layout.addLayout(info_layout, 3)
-        main_layout.addLayout(detail_layout, 3)
-        main_layout.addLayout(motion_layout, 2)
+        main_layout.addLayout(info_layout, 1)
+        main_layout.addLayout(detail_layout, 2)
         
     def _format_time_ms(self, time_ms):
         """밀리초 값을 mm:ss:zzz 형식으로 변환"""
@@ -248,6 +251,8 @@ class MonitorPage(QWidget, Ui_Form):
         self.is_monitoring = False
         self.device_widgets = {}  # device_id -> DeviceInfoWidget 매핑
         self.monitored_devices = []  # 모니터링할 장치 목록
+        self.device_rows = []  # 각 행의 HBoxLayout을 저장할 리스트
+        self.current_row_widget_count = 0  # 현재 행의 위젯 개수
         
         # 상태 데이터 저장 (각 장치별)
         self.device_status_data = {}  # device_id -> status_data
@@ -269,6 +274,9 @@ class MonitorPage(QWidget, Ui_Form):
         self.serial_manager.connection_changed.connect(self._update_connection_status)
         self.serial_manager.error_occurred.connect(self._show_error)
         
+        # GridLayout으로 2열 배치 설정
+        self._setup_device_grid_layout()
+        
         # 연결 상태 초기화 및 프로토콜 시그널 연결
         if self.serial_manager.is_port_connected():
             self.connect_protocol_signals()
@@ -278,6 +286,13 @@ class MonitorPage(QWidget, Ui_Form):
         """초기 UI 설정"""
         self.refreshButton.setEnabled(False)
         self.update_device_count(0)
+        
+    def _setup_device_grid_layout(self):
+        """장치 위젯을 2열로 배치하기 위한 준비 - 기존 VBoxLayout 유지"""
+        # 기존 deviceLayout은 그대로 두고, 2열 배치를 위한 변수만 초기화
+        self.device_rows = []  # 각 행의 HBoxLayout을 저장할 리스트
+        self.current_row_widget_count = 0  # 현재 행의 위젯 개수
+        print("2열 배치 준비 완료")
         
     def __del__(self):
         """소멸자: 사용한 자원 정리"""
@@ -419,7 +434,7 @@ class MonitorPage(QWidget, Ui_Form):
         print(f"스캔된 장치 설정: {scanned_device_ids}")
 
     def add_device_widget(self, device_info):
-        """장치 위젯을 동적으로 추가"""
+        """장치 위젯을 동적으로 추가 - HBoxLayout으로 2열 배치"""
         device_id = device_info.get('id', device_info.get('port', 'unknown'))
         
         # 기존 위젯이 있으면 제거
@@ -430,25 +445,99 @@ class MonitorPage(QWidget, Ui_Form):
         device_widget = DeviceInfoWidget(device_info)
         self.device_widgets[device_id] = device_widget
         
-        # deviceLayout에 추가 (spacer 앞에 삽입)
-        insert_index = self.deviceLayout.count() - 1
-        self.deviceLayout.insertWidget(insert_index, device_widget)
+        # 2열 배치를 위한 HBoxLayout 사용
+        if self.current_row_widget_count == 0:
+            # 새로운 행 생성
+            row_widget = QWidget()
+            row_layout = QHBoxLayout(row_widget)
+            row_layout.setSpacing(10)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # 첫 번째 위젯 추가
+            row_layout.addWidget(device_widget)
+            
+            # 두 번째 자리 확보를 위한 스트레치 추가 (나중에 제거됨)
+            row_layout.addStretch()
+            
+            # deviceLayout에 행 추가 (spacer 앞에)
+            spacer_index = self.deviceLayout.count() - 1
+            if spacer_index >= 0:
+                self.deviceLayout.insertWidget(spacer_index, row_widget)
+            else:
+                self.deviceLayout.addWidget(row_widget)
+            
+            self.device_rows.append((row_widget, row_layout))
+            self.current_row_widget_count = 1
+            
+        elif self.current_row_widget_count == 1:
+            # 현재 행에 두 번째 위젯 추가
+            if self.device_rows:
+                row_widget, row_layout = self.device_rows[-1]
+                
+                # 기존 스트레치 제거
+                if row_layout.count() > 1:
+                    stretch_item = row_layout.takeAt(1)
+                    if stretch_item:
+                        del stretch_item
+                
+                # 두 번째 위젯 추가
+                row_layout.addWidget(device_widget)
+                self.current_row_widget_count = 2
         
-        print(f"장치 위젯 추가: {device_id}")
+        else:
+            # 현재 행이 꽉 찬 경우, 새로운 행 시작
+            self.current_row_widget_count = 0
+            self.add_device_widget(device_info)  # 재귀 호출
+            return
+        
+        print(f"장치 위젯 추가: {device_id} (행: {len(self.device_rows)}, 위치: {self.current_row_widget_count})")
 
     def remove_device_widget(self, device_id):
-        """장치 위젯 제거"""
+        """장치 위젯 제거 - 2열 배치에서 제거"""
         if device_id in self.device_widgets:
             widget = self.device_widgets[device_id]
-            self.deviceLayout.removeWidget(widget)
-            widget.deleteLater()
-            del self.device_widgets[device_id]
-            print(f"장치 위젯 제거: {device_id}")
+            
+            # 해당 위젯이 포함된 행 찾기
+            for i, (row_widget, row_layout) in enumerate(self.device_rows):
+                for j in range(row_layout.count()):
+                    item = row_layout.itemAt(j)
+                    if item and item.widget() == widget:
+                        row_layout.removeWidget(widget)
+                        widget.deleteLater()
+                        del self.device_widgets[device_id]
+                        
+                        # 행이 비어있으면 행 전체 제거
+                        widget_count_in_row = sum(1 for k in range(row_layout.count()) 
+                                                if row_layout.itemAt(k) and row_layout.itemAt(k).widget())
+                        
+                        if widget_count_in_row == 0:
+                            self.deviceLayout.removeWidget(row_widget)
+                            row_widget.deleteLater()
+                            self.device_rows.pop(i)
+                            
+                        # 카운트 업데이트
+                        self.current_row_widget_count = max(0, self.current_row_widget_count - 1)
+                        if self.current_row_widget_count == 0 and self.device_rows:
+                            self.current_row_widget_count = 2  # 이전 행이 꽉 차있다고 가정
+                            
+                        print(f"장치 위젯 제거: {device_id}")
+                        return
+            
+            print(f"장치 위젯 제거 실패 (찾을 수 없음): {device_id}")
 
     def clear_device_widgets(self):
         """모든 장치 위젯 제거"""
-        for device_id in list(self.device_widgets.keys()):
-            self.remove_device_widget(device_id)
+        # 모든 행 위젯 제거
+        for row_widget, row_layout in self.device_rows:
+            self.deviceLayout.removeWidget(row_widget)
+            row_widget.deleteLater()
+        
+        # 장치 위젯 딕셔너리 초기화
+        self.device_widgets.clear()
+        
+        # 행 관련 변수 초기화
+        self.device_rows.clear()
+        self.current_row_widget_count = 0
             
     def _create_default_device(self):
         """현재 연결된 시리얼 포트를 기반으로 기본 장치 생성"""
