@@ -23,6 +23,12 @@ import json
 from src.api.api_manager import ApiManager
 from src.api.sse_manager import SSEManager  # SSE 매니저 추가
 
+# 자동 동기화 서비스 임포트
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'net_test'))
+from auto_device_sync import AutoDeviceSync
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -58,6 +64,14 @@ class MainWindow(QMainWindow):
         self.sse_manager.connection_error.connect(self.handle_sse_error)
         self.sse_manager.connection_established.connect(self.handle_sse_connected)
         self.sse_manager.connection_closed.connect(self.handle_sse_disconnected)
+        
+        # 자동 장치 동기화 서비스 초기화
+        self.auto_device_sync = AutoDeviceSync()
+        
+        # 자동 동기화 서비스에 SSE 매니저 참조 전달
+        self.auto_device_sync.set_sse_manager(self.sse_manager)
+        
+        self.auto_device_sync.start_service()
         
         # 스레드 초기화
         self.serial_thread = SerialReaderThread()
@@ -184,116 +198,106 @@ class MainWindow(QMainWindow):
 
     def init_sse_connection(self):
         """SSE 연결 초기화 및 시작"""
-        # SSE 연결 설정
+        # SSE 연결 설정 (새로운 API 구조)
         self.sse_manager.configure(
-            url="https://robot-monitor-dev.systemiic.com/v1/service/stores/event-sources",
-            store_id="store123",  # 실제 상점 ID로 변경
-            params={"pcId": "pc1"},  # 실제 PC ID로 변경
-            headers={"Authorization": "Bearer your-token-here"}  # 실제 인증 토큰으로 변경
+            base_url="https://robot-monitor-dev.systemiic.com",
+            headers={}  # Bearer 토큰이 필요하면 여기에 추가
         )
         
-        # 특정 이벤트 타입에 대한 핸들러 등록 (선택사항)
-        self.sse_manager.register_handler("sse", self.handle_sse_event_data)
+        # 특정 이벤트 타입에 대한 핸들러 등록 (새로운 시그널 구조)
+        self.sse_manager.register_handler("power", self.handle_power_event_data)
         self.sse_manager.register_handler("message", self.handle_message_event_data)
         
-        # SSE 연결 시작
+        # 새로운 시그널 연결 (object_id 포함)
+        self.sse_manager.event_received.connect(self.handle_sse_event)
+        self.sse_manager.connection_error.connect(self.handle_sse_error)
+        self.sse_manager.connection_established.connect(self.handle_sse_connected)
+        self.sse_manager.connection_closed.connect(self.handle_sse_disconnected)
+        
+        # SSE 연결 시작 (모든 오브제 연결)
         self.sse_manager.start()
         self.logger.info("SSE 연결이 시작되었습니다.")
 
-    @Slot(dict)
-    def handle_sse_event_data(self, data):
-        """SSE 이벤트 데이터 처리"""
-        self.logger.info(f"SSE 이벤트 처리: {data}")
-        # 여기에 SSE 이벤트 처리 로직 구현
+    @Slot(str, dict)
+    def handle_power_event_data(self, object_id, data):
+        """전원 이벤트 데이터 처리"""
+        self.logger.info(f"전원 이벤트 처리 (Object {object_id}): {data}")
+        # 여기에 전원 이벤트 처리 로직 구현
     
-    @Slot(dict)
-    def handle_message_event_data(self, data):
+    @Slot(str, dict)
+    def handle_message_event_data(self, object_id, data):
         """메시지 이벤트 데이터 처리"""
-        self.logger.info(f"메시지 이벤트 처리: {data}")
+        self.logger.info(f"메시지 이벤트 처리 (Object {object_id}): {data}")
         # 여기에 메시지 이벤트 처리 로직 구현
 
-    @Slot(str, dict)
-    def handle_sse_event(self, event_type, data):
+    @Slot(str, str, dict)
+    def handle_sse_event(self, object_id, event_type, data):
         """SSE 이벤트 수신 처리"""
-        self.logger.info(f"SSE 이벤트 수신: 타입={event_type}, 데이터={data}")
+        self.logger.info(f"SSE 이벤트 수신: Object={object_id}, 타입={event_type}, 데이터={data}")
         
         # 이벤트 타입에 따른 처리 로직
-        if event_type == 'sse':
-            # SSE 이벤트 처리
-            self._handle_sse_command(data)
+        if event_type == 'power':
+            # 전원 이벤트 처리
+            self._handle_power_event(object_id, data)
         elif event_type == 'message':
             # 일반 메시지 처리
-            self._handle_message(data)
+            self._handle_message(object_id, data)
         elif event_type == 'control':
             # 제어 명령 처리
-            self._handle_control_command(data)
+            self._handle_control_command(object_id, data)
         else:
-            self.logger.debug(f"처리되지 않은 이벤트 타입: {event_type}")
+            self.logger.debug(f"처리되지 않은 이벤트 타입: {event_type} (Object: {object_id})")
     
-    def _handle_sse_command(self, data):
-        """SSE 명령 이벤트 처리"""
+    def _handle_power_event(self, object_id, data):
+        """전원 이벤트 처리"""
         try:
-            # 데이터 형식 확인 (JSON 문자열인 경우 파싱)
-            if isinstance(data.get('data'), str):
-                command_data = json.loads(data.get('data', '{}'))
-            else:
-                command_data = data.get('data', {})
-                
-            store_id = command_data.get('storeId')
-            object_id = command_data.get('objectId')
-            event = command_data.get('event')
+            # 전원 상태 변경 이벤트 처리
+            power_status = data.get('power_status')
             
-            if event == 'ON':
-                self.logger.info(f"전원 ON 명령 수신: 객체 ID={object_id}")
+            if power_status == 'ON':
+                self.logger.info(f"전원 ON 이벤트 수신: Object ID={object_id}")
                 # 실제 디바이스 전원 켜기 로직 구현
                 # 예: self.device_controller.turn_on(object_id)
                 
-            elif event == 'OFF':
-                self.logger.info(f"전원 OFF 명령 수신: 객체 ID={object_id}")
+            elif power_status == 'OFF':
+                self.logger.info(f"전원 OFF 이벤트 수신: Object ID={object_id}")
                 # 실제 디바이스 전원 끄기 로직 구현
                 # 예: self.device_controller.turn_off(object_id)
                 
-            elif event == 'REBOOT':
-                self.logger.info(f"재부팅 명령 수신: 객체 ID={object_id}")
-                # 실제 디바이스 재부팅 로직 구현
-                # 예: self.device_controller.reboot(object_id)
-                
             else:
-                self.logger.info(f"알 수 없는 명령 수신: {event}, 객체 ID={object_id}")
+                self.logger.info(f"전원 상태 변경: {power_status}, Object ID={object_id}")
                 
-        except json.JSONDecodeError:
-            self.logger.warning(f"SSE 명령 데이터 파싱 오류: {data}")
         except Exception as e:
-            self.logger.error(f"SSE 명령 처리 중 오류 발생: {str(e)}")
+            self.logger.error(f"전원 이벤트 처리 중 오류 발생: {str(e)}")
     
-    def _handle_message(self, data):
+    def _handle_message(self, object_id, data):
         """일반 메시지 이벤트 처리"""
-        self.logger.info(f"메시지 이벤트 처리: {data}")
+        self.logger.info(f"메시지 이벤트 처리 (Object {object_id}): {data}")
         # 메시지 처리 로직 구현
         # 예: self.ui.update_status_message(data.get('message'))
     
-    def _handle_control_command(self, data):
+    def _handle_control_command(self, object_id, data):
         """제어 명령 이벤트 처리"""
-        self.logger.info(f"제어 명령 처리: {data}")
+        self.logger.info(f"제어 명령 처리 (Object {object_id}): {data}")
         # 제어 명령 처리 로직 구현
         # 예: self.robot_controller.execute_command(data)
     
-    @Slot()
-    def handle_sse_connected(self):
-        """SSE 연결 성공 처리"""
-        self.logger.info("SSE 서버에 연결되었습니다.")
-        # 로그만 남기고 추가 동작은 하지 않습니다.
-    
     @Slot(str)
-    def handle_sse_error(self, error_msg):
+    def handle_sse_connected(self, object_id):
+        """SSE 연결 성공 처리"""
+        self.logger.info(f"SSE 서버에 연결되었습니다 (Object: {object_id})")
+        # 연결 성공 시 추가 처리 로직
+    
+    @Slot(str, str)
+    def handle_sse_error(self, object_id, error_msg):
         """SSE 연결 오류 처리"""
-        self.logger.error(f"SSE 연결 오류: {error_msg}")
+        self.logger.error(f"SSE 연결 오류 (Object: {object_id}): {error_msg}")
         # 오류 처리 로직 (재연결 시도, 사용자에게 알림 등)
     
-    @Slot()
-    def handle_sse_disconnected(self):
+    @Slot(str)
+    def handle_sse_disconnected(self, object_id):
         """SSE 연결 종료 처리"""
-        self.logger.info("SSE 연결이 종료되었습니다.")
+        self.logger.info(f"SSE 연결이 종료되었습니다 (Object: {object_id})")
         # 연결 종료 처리 로직
     
     def toggle_maximize_restore(self):
@@ -340,6 +344,10 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """프로그램 종료 시 정리 작업"""
+        # 자동 장치 동기화 서비스 정리
+        if hasattr(self, 'auto_device_sync'):
+            self.auto_device_sync.stop_service()
+            
         # SSE 연결 종료
         self.sse_manager.stop()
         
