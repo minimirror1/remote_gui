@@ -64,6 +64,14 @@ def main():
         # 이벤트 루프 실행
         exit_code = app.exec()
         
+        # 애플리케이션 종료 시 DeviceStatusManager 정리
+        try:
+            from src.device_status_manager import DeviceStatusManager
+            device_status_manager = DeviceStatusManager.get_instance()
+            device_status_manager.cleanup()
+        except Exception as e:
+            logger.error(f"DeviceStatusManager 정리 중 오류: {e}")
+        
         logger.info("애플리케이션 종료")
         sys.exit(exit_code)
         

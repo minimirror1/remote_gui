@@ -6,6 +6,7 @@ from PySide6.QtGui import QFont, QPixmap
 from src.ui.monitor_page_ui import Ui_Form
 from src.serial_manager import SerialManager
 from src.widgets.serial_commands import SerialCommands
+from src.device_status_manager import DeviceStatusManager
 import _icons_rc
 
 
@@ -247,6 +248,9 @@ class MonitorPage(QWidget, Ui_Form):
         self.serial_commands = SerialCommands.get_instance()
         self.serial_manager = self.serial_commands.serial_manager
         
+        # DeviceStatusManager 인스턴스 가져오기
+        self.device_status_manager = DeviceStatusManager.get_instance()
+        
         # 모니터링 관련 변수 초기화
         self.is_monitoring = False
         self.device_widgets = {}  # device_id -> DeviceInfoWidget 매핑
@@ -254,12 +258,8 @@ class MonitorPage(QWidget, Ui_Form):
         self.device_rows = []  # 각 행의 HBoxLayout을 저장할 리스트
         self.current_row_widget_count = 0  # 현재 행의 위젯 개수
         
-        # 상태 데이터 저장 (각 장치별)
+        # 상태 데이터 저장 (각 장치별) - 하위 호환성용
         self.device_status_data = {}  # device_id -> status_data
-        
-        # 시그널 연결 상태 추적
-        self._status_signals_connected = False
-        self._current_protocol = None
         
         # 폴링 타이머 설정 (실제로는 프로토콜 시그널을 사용)
         self.status_update_timer = QTimer()
@@ -274,13 +274,18 @@ class MonitorPage(QWidget, Ui_Form):
         self.serial_manager.connection_changed.connect(self._update_connection_status)
         self.serial_manager.error_occurred.connect(self._show_error)
         
+        # DeviceStatusManager 시그널 연결
+        self.device_status_manager.device_status_updated.connect(self.on_device_status_updated)
+        self.device_status_manager.device_connected.connect(self.on_device_connected)
+        self.device_status_manager.device_disconnected.connect(self.on_device_disconnected)
+        
         # GridLayout으로 2열 배치 설정
         self._setup_device_grid_layout()
         
-        # 연결 상태 초기화 및 프로토콜 시그널 연결
-        if self.serial_manager.is_port_connected():
-            self.connect_protocol_signals()
+        # 연결 상태 초기화 - DeviceStatusManager가 자동으로 프로토콜 시그널 처리
         self._update_connection_status(self.serial_manager.is_port_connected())
+        
+        print("MonitorPage: DeviceStatusManager를 통한 전역 상태 관리 활성화")
 
     def _setup_initial_ui(self):
         """초기 UI 설정"""
@@ -308,9 +313,6 @@ class MonitorPage(QWidget, Ui_Form):
         if hasattr(self, 'status_update_timer') and self.status_update_timer:
             self.status_update_timer.stop()
             
-        # 프로토콜 시그널 연결 해제
-        self.disconnect_protocol_signals()
-            
         # SerialManager 연결 해제
         if hasattr(self, 'serial_manager') and self.serial_manager:
             try:
@@ -319,39 +321,15 @@ class MonitorPage(QWidget, Ui_Form):
             except Exception as e:
                 print(f"시그널 연결 해제 실패: {e}")
                 
-    def connect_protocol_signals(self):
-        """프로토콜 시그널 연결 (home_page.py와 동일)"""
-        protocol = self.serial_commands.serial_manager.get_protocol()
-        if protocol:
-            # 현재 protocol이 다르다면 이전 연결 해제
-            if self._current_protocol is not protocol:
-                self.disconnect_protocol_signals()
-            
-            # 새로운 연결 설정
-            if not self._status_signals_connected:
-                protocol.status_sync_changed.connect(self.on_status_sync_changed)
-                self._status_signals_connected = True
-                self._current_protocol = protocol
-                print("MonitorPage: 프로토콜 시그널 연결됨")
-                
-    def disconnect_protocol_signals(self):
-        """프로토콜 시그널 연결 해제"""
-        if self._status_signals_connected and self._current_protocol:
+        # DeviceStatusManager 시그널 연결 해제
+        if hasattr(self, 'device_status_manager') and self.device_status_manager:
             try:
-                self._current_protocol.status_sync_changed.disconnect(self.on_status_sync_changed)
-                print("MonitorPage: 프로토콜 시그널 연결 해제됨")
-            except:
-                pass
-            self._status_signals_connected = False
-            self._current_protocol = None
-
-    def on_connection_changed(self, is_connected: bool):
-        """시리얼 연결 상태가 변경될 때 호출 (home_page.py와 동일)"""
-        if is_connected:
-            self.connect_protocol_signals()
-        else:
-            self.disconnect_protocol_signals()
-            
+                self.device_status_manager.device_status_updated.disconnect(self.on_device_status_updated)
+                self.device_status_manager.device_connected.disconnect(self.on_device_connected)
+                self.device_status_manager.device_disconnected.disconnect(self.on_device_disconnected)
+            except Exception as e:
+                print(f"DeviceStatusManager 시그널 연결 해제 실패: {e}")
+                
     @Slot()
     def on_refresh_clicked(self):
         """새로고침 버튼 클릭 처리"""
@@ -368,42 +346,42 @@ class MonitorPage(QWidget, Ui_Form):
         else:
             self.start_monitoring()
             
-    @Slot(dict)
-    def on_status_sync_changed(self, status_data: dict):
-        """상태 동기화 시그널 처리 - 장치 ID별로 데이터 분리 처리"""
-        # 상태 데이터에서 장치 ID 추출 (protocol에서 직접 전달됨)
-        device_id = status_data.get('device_id')
-        
-        # 디버깅: 수신된 데이터 정보 출력
-        print(f"=== 상태 데이터 수신 ===")
-        print(f"device_id: {device_id} (타입: {type(device_id)})")
-        print(f"등록된 장치 위젯: {list(self.device_widgets.keys())} (타입: {[type(k) for k in self.device_widgets.keys()]})")
-        
-        if device_id is not None:
-            # device_id 타입 통일 (int로 변환)
-            try:
-                device_id = int(device_id)
-                status_data['device_id'] = device_id  # 변환된 값으로 업데이트
-            except (ValueError, TypeError):
-                print(f"device_id 타입 변환 실패: {device_id}")
-                return  # device_id가 유효하지 않으면 처리하지 않음
-        else:
-            print("⚠ device_id가 없음 - 상태 데이터 무시")
-            return  # device_id가 없으면 처리하지 않음
-        
-        # 해당 장치의 상태 데이터로 업데이트
-        self.device_status_data[device_id] = status_data
-        
+
+    
+    @Slot(str, dict)
+    def on_device_status_updated(self, device_id: str, status_data: dict):
+        """DeviceStatusManager에서 장치 상태 업데이트 알림을 받았을 때 처리"""
+        # device_id를 int로 변환하여 기존 위젯과 매칭
+        try:
+            widget_key = int(device_id)
+        except (ValueError, TypeError):
+            widget_key = device_id
+            
         # 해당 장치 위젯 업데이트
-        if device_id in self.device_widgets:
-            self.device_widgets[device_id].update_status(status_data)
+        if widget_key in self.device_widgets:
+            self.device_widgets[widget_key].update_status(status_data)
             print(f"✓ 장치 ID {device_id} 위젯 업데이트 성공")
         else:
             print(f"✗ 장치 ID {device_id} 위젯을 찾을 수 없음")
             print(f"  등록된 위젯 키: {list(self.device_widgets.keys())}")
+            
+        # 기존 로컬 상태 데이터도 업데이트 (하위 호환성)
+        self.device_status_data[widget_key] = status_data
         
-        # 시그널 발생
-        self.device_status_updated.emit(str(device_id), status_data)
+        # 시그널 발생 (기존 호환성)
+        self.device_status_updated.emit(device_id, status_data)
+    
+    @Slot(str)
+    def on_device_connected(self, device_id: str):
+        """장치 연결 시 호출"""
+        print(f"장치 연결됨: {device_id}")
+        # 필요시 UI 업데이트 로직 추가
+        
+    @Slot(str)
+    def on_device_disconnected(self, device_id: str):
+        """장치 연결 해제 시 호출"""
+        print(f"장치 연결 해제됨: {device_id}")
+        # 필요시 UI 업데이트 로직 추가
 
     def set_monitored_devices(self, devices):
         """모니터링할 장치 목록 설정 (setting_page에서 호출)"""
@@ -624,12 +602,14 @@ class MonitorPage(QWidget, Ui_Form):
         pass
 
     def get_device_status(self, device):
-        """개별 장치의 상태를 확인 - 실제 저장된 상태 데이터 반환"""
+        """개별 장치의 상태를 확인 - DeviceStatusManager에서 최신 데이터 반환"""
         device_id = device.get('id', device.get('port', 'unknown'))
         
-        # 저장된 상태 데이터가 있으면 반환
-        if device_id in self.device_status_data:
-            return self.device_status_data[device_id]
+        # DeviceStatusManager에서 최신 상태 데이터 가져오기
+        status_data = self.device_status_manager.get_device_status(str(device_id))
+        
+        if status_data:
+            return status_data
         
         # 없으면 기본값 반환 (연결되지 않은 상태) - 장치 ID 포함
         return {
@@ -649,11 +629,8 @@ class MonitorPage(QWidget, Ui_Form):
         
         if not is_connected and self.is_monitoring:
             self.stop_monitoring()
-        else:
-            # 연결되면 프로토콜 시그널 연결
-            self.on_connection_changed(is_connected)
             
-        print(f"MonitorPage - 연결 상태: {is_connected}")
+        print(f"MonitorPage - 연결 상태: {is_connected} (DeviceStatusManager가 프로토콜 시그널 자동 관리)")
     
     @Slot(str)
     def _show_error(self, error_message: str):
@@ -718,16 +695,15 @@ class MonitorPage(QWidget, Ui_Form):
                     self.device_widgets[device_id].update_status(status_data)
 
     def get_monitoring_status(self):
-        """현재 모니터링 상태 반환"""
-        connected_count = 0
-        for device in self.monitored_devices:
-            status_data = self.get_device_status(device)
-            if status_data.get('main_power', {}).get('status', False):
-                connected_count += 1
-                
+        """현재 모니터링 상태 반환 - DeviceStatusManager 활용"""
+        # DeviceStatusManager에서 연결된 장치 개수 직접 가져오기
+        connected_count = self.device_status_manager.get_connected_device_count()
+        total_devices = self.device_status_manager.get_device_count()
+        
         return {
             'is_monitoring': self.is_monitoring,
-            'device_count': len(self.monitored_devices),
+            'device_count': max(len(self.monitored_devices), total_devices),  # 더 큰 값 사용
             'connected_devices': connected_count,
-            'serial_connected': self.serial_manager.is_port_connected()
+            'serial_connected': self.serial_manager.is_port_connected(),
+            'status_manager_devices': total_devices  # DeviceStatusManager의 장치 개수
         }
