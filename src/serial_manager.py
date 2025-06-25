@@ -260,37 +260,44 @@ class SerialManager(QObject):
         
     def send_command(self, cmd: int, data: bytes, receiverId: int = None, senderId: int = None) -> bool:
         """
-        일반적인 명령을 전송합니다. 연결확인과 ID 스캔을 제외한 모든 명령에 사용합니다.
+        일반적인 명령을 전송합니다.
         
         Args:
-            cmd (int): 명령 코드
-            data (bytes): 명령 데이터(페이로드)
-            receiverId (int, optional): 수신자 ID. 기본값은 _target_device_id
-            senderId (int, optional): 송신자 ID. 기본값은 DEFAULT_HOST_ID
+            cmd: 명령 코드
+            data: 전송할 데이터
+            receiverId: 수신자 ID (기본값: 현재 대상 장치)
+            senderId: 송신자 ID (기본값: 호스트 ID)
             
         Returns:
             bool: 전송 성공 여부
         """
-        # 연결확인(PING)과 ID 스캔 명령은 이 메서드를 사용하지 않음
-        if cmd == ComProtocol.CMD_PING or cmd == ComProtocol.CMD_ID_SCAN:
-            print(f"연결확인(PING)과 ID 스캔은 이 메서드를 사용하지 마세요.")
-            return False
+        if receiverId is None:
+            receiverId = self._target_device_id
+        if senderId is None:
+            senderId = self.DEFAULT_HOST_ID
             
-        if not self.is_port_connected() or not self.protocol:
-            self.error_occurred.emit("포트가 연결되지 않았습니다")
-            return False
-            
+        return self.send_packet(receiverId, senderId, cmd, data)
+
+    def cleanup(self) -> None:
+        """시리얼 매니저 리소스 정리"""
         try:
-            # 기본값 설정
-            if receiverId is None:
-                receiverId = self._target_device_id
-            if senderId is None:
-                senderId = self.DEFAULT_HOST_ID
-                
-            # send_packet 메서드 호출
-            return self.send_packet(receiverId, senderId, cmd, data)
+            print("시리얼 매니저 정리 시작...")
+            
+            # 시리얼 스레드 중지
+            self.stop_serial_thread()
+            
+            # 시리얼 포트 연결 해제
+            if self.serial_port and self.serial_port.is_open:
+                self.serial_port.close()
+                print("시리얼 포트 연결 해제 완료")
+            
+            # 리소스 초기화
+            self.serial_port = None
+            self.protocol = None
+            self.reader_thread = None
+            self.is_connected = False
+            
+            print("시리얼 매니저 정리 완료")
             
         except Exception as e:
-            error_msg = f"명령 전송 실패: {str(e)}"
-            self.error_occurred.emit(error_msg)
-            return False 
+            print(f"시리얼 매니저 정리 중 오류: {e}") 

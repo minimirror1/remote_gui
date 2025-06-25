@@ -1,4 +1,4 @@
-from PySide6.QtCore import QObject, Signal, QDateTime, Slot
+from PySide6.QtCore import QObject, Signal, QDateTime, Slot, QTimer
 from typing import Dict, Any, Optional, List
 import threading
 
@@ -54,6 +54,13 @@ class DeviceStatusManager(QObject):
         
         # SerialManager 인스턴스 연결 (싱글톤이므로 직접 import 후 연결)
         self._connect_to_serial_manager()
+        
+        # 타이머 설정 (저사양 CPU 최적화)
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.update_status)
+        self.update_interval = 300  # 300ms (기존 200ms에서 증가)
+        
+        print("🔍 [DEBUG] DeviceStatusManager 타이머 간격: 300ms")  # 디버깅 출력 추가
         
         self._initialized = True
         print("DeviceStatusManager 초기화 완료")
@@ -131,7 +138,8 @@ class DeviceStatusManager(QObject):
         # 상태 데이터에서 장치 ID 추출
         device_id = status_data.get('device_id')
         
-        print(f"DeviceStatusManager: 상태 데이터 수신 - device_id: {device_id}")
+        # 로그 출력을 줄이기 위해 중요한 이벤트만 출력
+        # print(f"DeviceStatusManager: 상태 데이터 수신 - device_id: {device_id}")
         
         if device_id is not None:
             # device_id 타입 통일 (문자열로 변환)
@@ -147,7 +155,8 @@ class DeviceStatusManager(QObject):
         
         # 장치 상태 업데이트
         self.update_device_status(device_id, status_data)
-        print(f"DeviceStatusManager: 장치 ID {device_id} 상태 업데이트 완료 (전역)")
+        # 로그 출력을 줄이기 위해 중요한 이벤트만 출력
+        # print(f"DeviceStatusManager: 장치 ID {device_id} 상태 업데이트 완료 (전역)")
     
     def _mark_all_devices_disconnected(self):
         """모든 장치를 연결 해제 상태로 변경"""
@@ -181,15 +190,20 @@ class DeviceStatusManager(QObject):
             was_connected = device_id in self._connected_devices
             is_now_connected = self._is_device_connected(status_data)
             
+            # 연결 상태 변경 시에만 로그 출력
+            connection_changed = was_connected != is_now_connected
+            
             if is_now_connected:
                 self._connected_devices.add(device_id)
                 if not was_connected:
                     self.device_connected.emit(device_id)
+                    print(f"장치 연결됨: ID={device_id}")
             else:
                 if device_id in self._connected_devices:
                     self._connected_devices.remove(device_id)
                 if was_connected:
                     self.device_disconnected.emit(device_id)
+                    print(f"장치 연결 해제됨: ID={device_id}")
         
         # 시그널 발생 (락 외부에서)
         self.device_status_updated.emit(device_id, status_data)
@@ -197,7 +211,10 @@ class DeviceStatusManager(QObject):
         # 전체 상태 업데이트 시그널 (필요시)
         self.all_devices_status_updated.emit(self.get_all_devices_status())
         
-        print(f"장치 상태 업데이트: ID={device_id}, 연결={is_now_connected}")
+        # 연결 상태 변경 시에만 로그 출력
+        if connection_changed:
+            print(f"장치 상태 변경: ID={device_id}, 연결={is_now_connected}")
+        # 일반적인 상태 업데이트는 로그 출력하지 않음 (너무 빈번함)
     
     def _is_device_connected(self, status_data: Dict[str, Any]) -> bool:
         """
@@ -396,4 +413,36 @@ class DeviceStatusManager(QObject):
         return {
             'type': 'device_status',
             'data': self.get_status_summary()
-        } 
+        }
+    
+    def start_monitoring(self):
+        """상태 모니터링 시작"""
+        if not hasattr(self, 'update_timer'):
+            print("⚠️ 업데이트 타이머가 초기화되지 않았습니다.")
+            return
+        
+        if not self.update_timer.isActive():
+            self.update_timer.start(self.update_interval)
+            print(f"📊 상태 모니터링 시작 (간격: {self.update_interval}ms)")
+        else:
+            print("📊 상태 모니터링이 이미 실행 중입니다.")
+    
+    def stop_monitoring(self):
+        """상태 모니터링 중지"""
+        if hasattr(self, 'update_timer') and self.update_timer.isActive():
+            self.update_timer.stop()
+            print("📊 상태 모니터링 중지")
+    
+    @Slot()
+    def update_status(self):
+        """주기적으로 상태 업데이트 (다중 장치 환경 최적화)"""
+        try:
+            # 모든 장치의 상태를 한 번에 업데이트
+            for device_id in list(self._device_status.keys()):
+                # 각 장치의 최신 상태 확인
+                status = self.get_device_status(device_id)
+                if status and status != self._device_status.get(device_id, {}):
+                    # 상태가 변경된 경우에만 시그널 발송
+                    self.device_status_updated.emit(str(device_id), status)
+        except Exception as e:
+            print(f"❌ 상태 업데이트 중 오류: {e}") 

@@ -6,6 +6,7 @@ import time
 import threading
 from typing import Dict, Any, Set
 from PySide6.QtCore import QObject, Slot, QTimer, QCoreApplication
+from PySide6.QtWidgets import QApplication
 
 # src 디렉토리를 Python 경로에 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -19,13 +20,57 @@ from device_status_manager import DeviceStatusManager
 
 class AutoDeviceSync(QObject):
     """
-    DeviceStatusManager의 장치 상태 변화를 모니터링하고
-    새로운 장치가 추가되면 자동으로 서버에 등록하는 서비스
+    DeviceStatusManager와 연동하여 새로운 장치를 자동으로 서버에 동기화하는 서비스
+    다중 장치 환경에서 안정성을 위해 순차 처리 방식을 사용합니다.
     """
     
     def __init__(self, base_url: str = "https://robot-monitor-dev.systemiic.com"):
         super().__init__()
-        self.base_url = base_url.rstrip('/')
+        
+        self.base_url = base_url
+        self.device_manager = None
+        self.sse_manager = None
+        self.sse_client = None
+        
+        # 서버 환경 정보
+        self.store_id = None
+        self.pc_id = None
+        
+        # 등록된 장치 추적
+        self.registered_devices: set = set()
+        
+        # 장치 ID → 오브제 ID 매핑
+        self.device_to_object_mapping: Dict[str, str] = {}
+        
+        # 서비스 상태
+        self.is_running = False
+        self.check_timer = QTimer()
+        self.check_timer.timeout.connect(self.check_and_sync)
+        
+        # 다중 장치 환경 안정성을 위한 순차 처리 큐
+        self.sync_queue = []  # 처리 대기 중인 장치 목록
+        self.is_syncing = False  # 현재 동기화 진행 중 여부
+        self.sync_timer = QTimer()  # 순차 처리용 타이머
+        self.sync_timer.timeout.connect(self._process_sync_queue)
+        self.sync_timer.setSingleShot(True)
+        
+        # 기본 매장/PC 정보 (필요시 수정)
+        self.default_store = {
+            "store_name": "Default Store",
+            "country_code": "KR",
+            "address": "Seoul, Korea"
+        }
+        
+        print("🔍 [DEBUG] AutoDeviceSync 초기화 시작...")
+        
+        # DeviceStatusManager 연결
+        self._setup_device_manager()
+        
+        print("AutoDeviceSync 초기화 완료")
+        print("🔍 [DEBUG] AutoDeviceSync 생성 완료")
+    
+    def _setup_device_manager(self):
+        """DeviceStatusManager 연결"""
         self.device_manager = DeviceStatusManager.get_instance()
         
         # 서버에 등록된 장치 추적
@@ -55,8 +100,8 @@ class AutoDeviceSync(QObject):
         
         # 서비스 상태
         self.is_running = False
-        self.sync_timer = QTimer()
-        self.sync_timer.timeout.connect(self.check_and_sync)
+        self.check_timer = QTimer()
+        self.check_timer.timeout.connect(self.check_and_sync)
         
         # DeviceStatusManager 시그널 연결
         self._connect_signals()
@@ -111,58 +156,67 @@ class AutoDeviceSync(QObject):
         else:
             print("SSE 매니저 설정됨, 클라이언트는 나중에 설정 예정")
     
-    def start_service(self, check_interval: int = 5000):
+    def start(self, check_interval: int = 15000):
+        """자동 동기화 서비스 시작 (간단한 인터페이스)"""
+        return self.start_service(check_interval)
+    
+    def start_service(self, check_interval: int = 15000):
         """
-        자동 동기화 서비스 시작
+        자동 동기화 서비스 시작 (저사양 CPU 최적화)
         
         Args:
-            check_interval: 체크 간격 (밀리초)
+            check_interval: 체크 간격 (밀리초) - 기본값 15초
         """
         if self.is_running:
-            print("이미 서비스가 실행 중입니다.")
+            print("자동 장치 동기화 서비스가 이미 실행 중입니다.")
             return
         
-        print("=== 자동 장치 동기화 서비스 시작 ===")
+        print(f"자동 장치 동기화 서비스를 시작합니다... (체크 간격: {check_interval/1000}초)")
         
-        # 서버 연결 테스트
-        if not self._test_server_connection():
-            print("⚠️ 서버 연결 실패. 오프라인 모드로 시작합니다.")
-        else:
-            # 서버 환경 설정 (매장/PC 생성)
-            if not self._setup_server_environment():
-                print("⚠️ 서버 환경 설정 실패. 제한된 기능으로 서비스를 시작합니다.")
-        
-        # 주기적 체크 시작 (서버 환경 설정 실패와 관계없이)
-        self.sync_timer.start(check_interval)
+        # 주기적 체크 시작 (서버 환경 설정과 독립적으로)
+        self.check_timer.start(check_interval)
         self.is_running = True
         
-        print(f"✅ 서비스 시작됨 (체크 간격: {check_interval}ms)")
-        print("DeviceStatusManager의 장치 변화를 모니터링합니다...")
-        
-        if not self.store_id or not self.pc_id:
-            print("⚠️ 서버 등록 기능이 비활성화됨 (매장/PC 정보 없음)")
-            print("   장치 감지는 계속 동작하며, 서버 환경이 준비되면 자동으로 등록됩니다.")
+        print("자동 장치 동기화 서비스가 시작되었습니다.")
+        print("DeviceStatusManager의 장치 상태 변화를 모니터링합니다.")
+    
+    def stop(self):
+        """자동 동기화 서비스 중지 (간단한 인터페이스)"""
+        return self.stop_service()
     
     def stop_service(self):
-        """자동 동기화 서비스 중단"""
+        """자동 동기화 서비스 중지"""
         if not self.is_running:
+            print("자동 장치 동기화 서비스가 실행되지 않고 있습니다.")
             return
         
-        self.sync_timer.stop()
+        self.check_timer.stop()
         self.is_running = False
         print("자동 장치 동기화 서비스가 중단되었습니다.")
     
     @Slot(str)
     def on_device_connected(self, device_id: str):
-        """장치 연결 시 호출되는 슬롯"""
-        print(f"[자동 동기화] 장치 연결됨: {device_id}")
+        """장치 연결 시 자동 동기화 (지연 시작)"""
+        device_id = str(device_id)
+        print(f"[자동 동기화] 장치 연결됨: {device_id} (타입: {type(device_id)})")
         
-        # 즉시 동기화 시도
-        self._sync_device(device_id)
+        if device_id not in self.registered_devices:
+            print(f"  💡 새로운 장치 연결 - 시리얼 폴링 안정화 대기 중...")
+            print(f"  ⏳ 10초 후 동기화 시작 (시리얼 데이터 수집 완료 대기)")
+            
+            # 장치 연결 시에는 더 긴 지연 시간 적용 (10초)
+            self.registered_devices.add(device_id)  # 중복 방지를 위해 미리 추가
+            
+            # 10초 후에 동기화 시작
+            QTimer.singleShot(10000, lambda: self._delayed_sync_start(device_id))
+        else:
+            print(f"  ✅ 장치 {device_id}는 이미 등록됨")
     
     @Slot(str)
     def on_device_disconnected(self, device_id: str):
         """장치 연결 해제 시 호출되는 슬롯"""
+        # 장치 ID 정규화 (int -> str 변환)
+        device_id = str(device_id)
         print(f"[자동 동기화] 장치 연결 해제됨: {device_id}")
         
         # 등록 목록에서 제거 (재연결 시 다시 등록하도록)
@@ -170,19 +224,93 @@ class AutoDeviceSync(QObject):
     
     @Slot(str, dict)
     def on_device_status_updated(self, device_id: str, status_data: Dict[str, Any]):
-        """장치 상태 업데이트 시 호출되는 슬롯"""
-        # 새로운 장치인 경우에만 등록
+        """장치 상태 업데이트 시 자동 동기화 (순차 처리)"""
+        # 장치 ID 정규화 (int -> str 변환)
+        device_id = str(device_id)
+        
         if device_id not in self.registered_devices:
-            print(f"[자동 동기화] 새로운 장치 감지: {device_id}")
+            print(f"[자동 동기화] 새로운 장치 감지: {device_id} (타입: {type(device_id)})")
+            print(f"  현재 등록된 장치: {self.registered_devices}")
+            
+            # 시리얼 폴링 완료를 위해 충분한 지연 시간 추가 (5초)
+            print(f"  ⏳ 시리얼 폴링 완료 대기 중... (5초 후 동기화 시작)")
+            
+            # 다중 장치 환경에서 안정성을 위해 큐에 추가하여 순차 처리
+            if device_id not in self.sync_queue:
+                self.sync_queue.append(device_id)
+                print(f"  장치 {device_id}를 동기화 큐에 추가 (큐 크기: {len(self.sync_queue)})")
+                
+                # 5초 후에 처리 시작 (시리얼 폴링 완료 대기)
+                if not self.is_syncing:
+                    print(f"  📅 동기화 예약: 5초 후 시작")
+                    QTimer.singleShot(5000, self._process_sync_queue)  # 5초 지연
+        else:
+            # 이미 등록된 장치의 상태 업데이트는 로그 출력하지 않음 (너무 빈번함)
+            # print(f"[자동 동기화] 장치 {device_id}는 이미 등록됨 (스킵)")
+            pass
+    
+    def _process_sync_queue(self):
+        """동기화 큐를 순차적으로 처리"""
+        if self.is_syncing or not self.sync_queue:
+            return
+        
+        # 다음 장치 가져오기
+        device_id = self.sync_queue.pop(0)
+        self.is_syncing = True
+        
+        print(f"🔄 [큐 처리] 장치 {device_id} 동기화 시작... (남은 큐: {len(self.sync_queue)})")
+        
+        # 별도 스레드에서 처리하되, 완료 후 다음 장치 처리
+        import threading
+        sync_thread = threading.Thread(
+            target=self._sync_device_with_callback,
+            args=(device_id,),
+            daemon=True,
+            name=f"DeviceSync-{device_id}"
+        )
+        sync_thread.start()
+    
+    def _sync_device_with_callback(self, device_id: str):
+        """장치 동기화 후 다음 큐 처리를 위한 콜백"""
+        try:
             # 임시로 등록된 장치로 표시하여 무한 반복 방지
             self.registered_devices.add(device_id)
+            print(f"  등록된 장치 목록 업데이트: {self.registered_devices}")
+            
+            # 실제 동기화 수행
             self._sync_device(device_id)
+            print(f"✅ [큐 처리] 장치 {device_id} 동기화 완료")
+            
+        except Exception as e:
+            print(f"❌ [큐 처리] 장치 {device_id} 동기화 오류: {e}")
+            # 오류 시 registered_devices에서 제거 (재시도 가능하도록)
+            self.registered_devices.discard(device_id)
+            import traceback
+            traceback.print_exc()
+        finally:
+            # 동기화 완료 후 다음 장치 처리 (2초 지연으로 서버 부하 분산)
+            self.is_syncing = False
+            if self.sync_queue:
+                print(f"⏳ 다음 장치 처리를 위해 2초 대기... (남은 큐: {len(self.sync_queue)})")
+                self.sync_timer.start(2000)  # 2초 후 다음 장치 처리
+            else:
+                print("✅ 모든 장치 동기화 완료")
+    
+    def _sync_device_threaded(self, device_id: str):
+        """별도 스레드에서 장치 동기화 수행 (더 이상 사용하지 않음 - 순차 처리로 대체)"""
+        # 이 메서드는 하위 호환성을 위해 유지하되, 순차 처리로 리디렉션
+        print(f"🔄 [리디렉션] 장치 {device_id}를 순차 처리 큐로 이동")
+        if device_id not in self.sync_queue:
+            self.sync_queue.append(device_id)
+            if not self.is_syncing:
+                self._process_sync_queue()
     
     @Slot()
     def check_and_sync(self):
         """주기적으로 장치 상태를 확인하고 동기화"""
         try:
-            current_devices = set(self.device_manager.get_all_devices_status().keys())
+            # 모든 장치 ID를 문자열로 정규화
+            current_devices = set(str(device_id) for device_id in self.device_manager.get_all_devices_status().keys())
             
             # 새로운 장치가 있는지 확인
             new_devices = current_devices - self.registered_devices
@@ -196,67 +324,130 @@ class AutoDeviceSync(QObject):
             print(f"주기적 체크 오류: {e}")
     
     def _sync_device(self, device_id: str):
-        """단일 장치를 서버에 동기화"""        
+        """장치를 서버에 동기화 (개별 장치 처리) - 완전 비동기"""
         try:
-            print(f"[동기화 시작] 장치 ID: {device_id}")
+            print(f"🔄 [동기화] 장치 {device_id} 동기화 시작...")
             
-            # 서버 환경 확인 및 재설정
+            # 1. 서버 연결 테스트 (빠른 체크)
+            print(f"  🔍 서버 연결 테스트...")
+            if not self._test_server_connection():
+                print("  ❌ 서버 연결 실패 - 오프라인 모드로 동작")
+                return
+            print(f"  ✅ 서버 연결 성공")
+            
+            # 2. 매장/PC 환경 설정 (필요시)
             if not self.store_id or not self.pc_id:
-                print(f"  서버 환경 미설정: store_id={self.store_id}, pc_id={self.pc_id}")
-                print("  서버 환경 재설정 시도...")
-                
-                if not self._setup_server_environment():
-                    print(f"  ❌ 서버 환경 설정 실패 - 오프라인 모드로 동작")
-                    print(f"  장치 {device_id}는 로컬에서만 관리됩니다.")
+                print("  🏪 매장/PC 환경 설정...")
+                self._setup_store_and_pc()
+                if not self.store_id or not self.pc_id:
+                    print("  ❌ 매장/PC 환경 설정 실패")
                     return
-                else:
-                    print(f"  ✅ 서버 환경 설정 성공: store_id={self.store_id}, pc_id={self.pc_id}")
+                print(f"  ✅ 환경 설정 완료: Store={self.store_id}, PC={self.pc_id}")
             
-            # 장치 상태 데이터 가져오기
-            status_data = self.device_manager.get_device_status(device_id)
-            if not status_data:
-                print(f"  ⚠️ 장치 {device_id}의 상태 데이터가 없습니다.")
+            # 3. 장치 상태 데이터 가져오기
+            print(f"  🔍 장치 상태 데이터 조회...")
+            
+            try:
+                print(f"  🔍 DeviceStatusManager에서 장치 {device_id} 데이터 요청...")
+                device_data = self.device_manager.get_device_status(device_id)
+                print(f"  📋 조회 결과: {type(device_data)} (None={device_data is None})")
+                
+                if not device_data or not self._is_valid_device_data(device_data):
+                    print(f"  ❌ 장치 {device_id}의 유효한 상태 데이터가 없습니다")
+                    print(f"  💡 Zigbee 통신 문제 또는 장치 MCU 비활성 상태")
+                    print(f"  🚫 서버 등록 중단 (실제 장치 상태 없음)")
+                    
+                    # registered_devices에서 제거하여 나중에 재시도 가능하도록
+                    self.registered_devices.discard(device_id)
+                    return
+                
+                print(f"  ✅ 유효한 상태 데이터 확인 (키 개수: {len(device_data)})")
+                    
+            except Exception as data_error:
+                print(f"  ❌ 상태 데이터 조회 중 예외: {data_error}")
+                print(f"  🚫 서버 등록 중단 (데이터 조회 실패)")
+                
+                # registered_devices에서 제거하여 나중에 재시도 가능하도록
+                self.registered_devices.discard(device_id)
+                import traceback
+                traceback.print_exc()
                 return
             
-            print(f"  📊 상태 데이터 확인: {len(status_data)} 항목")
+            print(f"  ✅ 상태 데이터 검증 완료 - 오브제 생성 진행")
             
-            # 서버에 오브제로 등록
-            if self._create_object_on_server(device_id, status_data):
-                print(f"✅ 장치 {device_id} 서버 등록 완료")
-            else:
-                print(f"❌ 장치 {device_id} 서버 등록 실패")
-                
+            # 4. 오브제 생성 (비동기 처리)
+            print(f"  🔧 오브제 생성 시작...")
+            
+            # 복잡한 스레드 처리 대신 QTimer로 간단하게 처리
+            def create_object_delayed():
+                try:
+                    print(f"  🔄 [지연실행] 오브제 생성 시작...")
+                    object_id = self._create_object(device_id, device_data)
+                    
+                    if object_id:
+                        # 매핑 저장
+                        self.device_to_object_mapping[device_id] = object_id
+                        print(f"  ✅ 매핑 저장: 장치 {device_id} → 오브제 {object_id}")
+                        
+                        # SSE 연결 시작 (추가 지연)
+                        if self.sse_manager:
+                            print(f"  🔗 SSE 연결 예약 (2초 후)...")
+                            QTimer.singleShot(2000, lambda: self._start_sse_connection(object_id))
+                        
+                        print(f"✅ [동기화] 장치 {device_id} 동기화 완료 (오브제 ID: {object_id})")
+                    else:
+                        print(f"❌ [동기화] 장치 {device_id} 오브제 생성 실패")
+                        
+                except Exception as e:
+                    print(f"❌ [지연실행] 오브제 생성 오류: {e}")
+                    import traceback
+                    traceback.print_exc()
+            
+            # 오브제 생성을 메인 스레드에서 즉시 실행 (타이머 경고 방지)
+            print(f"  🔧 오브제 생성 즉시 실행...")
+            self._create_object_for_device(device_id)
+            
         except Exception as e:
-            print(f"❌ 장치 동기화 오류 ({device_id}): {e}")
+            print(f"❌ [동기화] 장치 {device_id} 동기화 중 오류: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _start_sse_connection(self, object_id: str):
+        """SSE 연결 시작 (지연 실행)"""
+        try:
+            print(f"  🔗 오브제 {object_id}에 대한 SSE 연결 시작...")
+            self.sse_manager.start(object_id)  # start_connection -> start로 수정
+            print(f"  ✅ SSE 연결 시작 완료")
+        except Exception as e:
+            print(f"  ❌ SSE 연결 시작 실패: {e}")
     
     def _test_server_connection(self) -> bool:
         """서버 연결 테스트"""
         try:
-            print(f"서버 연결 테스트 중: {self.base_url}/v1/health")
+            print(f"🔍 [DEBUG] 서버 연결 테스트 중: {self.base_url}/v1/health")
+            print("🔍 [DEBUG] HTTP 요청 전송 중... (여기서 멈출 수 있음)")
             response = requests.get(f"{self.base_url}/v1/health", timeout=5)
-            print(f"서버 연결 테스트 결과: {response.status_code}")
+            print(f"🔍 [DEBUG] 서버 응답 수신: {response.status_code}")
             if response.status_code == 200:
-                print("✅ 서버 연결 성공")
+                print("🔍 [DEBUG] ✅ 서버 연결 성공")
                 return True
             else:
-                print(f"❌ 서버 연결 실패: {response.status_code}")
+                print(f"🔍 [DEBUG] ❌ 서버 연결 실패: {response.status_code}")
                 return False
         except Exception as e:
-            print(f"❌ 서버 연결 오류: {e}")
+            print(f"🔍 [DEBUG] ❌ 서버 연결 오류: {e}")
             return False
     
-    def _setup_server_environment(self) -> bool:
+    def _setup_store_and_pc(self):
         """서버 환경 설정 (매장/PC 생성)"""
         try:
             # 매장 확인/생성
             if not self._ensure_store():
-                return False
+                return
             
             # PC 확인/생성
             if not self._ensure_pc():
-                return False
+                return
             
             print(f"서버 환경 설정 완료: Store={self.store_id}, PC={self.pc_id}")
             return True
@@ -413,56 +604,107 @@ class AutoDeviceSync(QObject):
         
         return False
     
-    def _create_object_on_server(self, device_id: str, status_data: Dict[str, Any]) -> bool:
-        """장치를 오브제로 서버에 등록"""
+    def _create_object(self, device_id: str, status_data: Dict[str, Any]) -> str:
+        """장치를 오브제로 서버에 등록 (안전한 처리)"""
         if not self.store_id or not self.pc_id:
-            print(f"  오브제 생성 실패: store_id={self.store_id}, pc_id={self.pc_id}")
-            return False
+            print(f"  ❌ 오브제 생성 실패: store_id={self.store_id}, pc_id={self.pc_id}")
+            return None
         
         try:
-            # 장치 상태 데이터에서 오브제 정보 생성
-            object_data = self._build_object_data(device_id, status_data)
+            print(f"🔧 [오브제 생성] 장치 {device_id} 오브제 생성 시작...")
+            
+            # 1. 오브제 데이터 생성 (빠른 실패)
+            try:
+                print(f"  📊 오브제 데이터 생성 중...")
+                object_data = self._build_object_data(device_id, status_data)
+                if not object_data:
+                    print(f"  ❌ 오브제 데이터 생성 실패")
+                    return None
+                print(f"  ✅ 오브제 데이터 생성 완료")
+            except Exception as build_error:
+                print(f"  ❌ 오브제 데이터 생성 중 오류: {build_error}")
+                return None
+            
+            # 2. HTTP 요청 준비
             url = f"{self.base_url}/v1/service/stores/{self.store_id}/pcs/{self.pc_id}/objects"
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
             
-            print(f"  오브제 생성 요청: {url}")
-            print(f"  요청 데이터: {json.dumps(object_data, indent=2)}")
+            print(f"  📡 오브제 생성 요청: {url}")
+            print(f"  📋 요청 데이터: {json.dumps(object_data, indent=2)}")
             
-            response = requests.post(
-                url,
-                json=object_data,
-                timeout=5
-            )
+            # 3. HTTP 요청 전송 (타임아웃 단축)
+            try:
+                print(f"  ⏳ HTTP 요청 전송 시작... (타임아웃: 3초)")
+                import time
+                start_time = time.time()
+                
+                # 더 짧은 타임아웃으로 빠른 실패
+                response = requests.post(
+                    url,
+                    json=object_data,
+                    headers=headers,
+                    timeout=3  # 3초로 더 단축
+                )
+                
+                elapsed_time = time.time() - start_time
+                print(f"  ✅ HTTP 응답 수신 완료 (소요시간: {elapsed_time:.2f}초)")
+                
+            except requests.exceptions.Timeout:
+                print(f"  ⏰ HTTP 요청 타임아웃 (3초 초과) - 빠른 실패로 GUI 보호")
+                return None
+            except requests.exceptions.ConnectionError as conn_error:
+                print(f"  🔌 HTTP 연결 오류: {conn_error}")
+                return None
+            except requests.exceptions.RequestException as req_error:
+                print(f"  📡 HTTP 요청 오류: {req_error}")
+                return None
+            except Exception as e:
+                print(f"  ❌ 예상치 못한 HTTP 오류: {e}")
+                return None
             
-            print(f"  응답 상태: {response.status_code}")
+            # 4. 응답 처리
+            print(f"  📊 응답 상태: {response.status_code}")
             
             if response.status_code == 200:
-                response_data = response.json()
-                object_id = response_data.get("object_id")
-                print(f"  ✅ 오브제 생성 성공: {object_id}")
-                print(f"  응답 데이터: {response_data}")
-                
-                # 장치 ID → 오브제 ID 매핑 저장
-                self.device_to_object_mapping[device_id] = object_id
-                print(f"  📝 매핑 저장: 장치 {device_id} → 오브제 {object_id}")
-                
-                # SSE 클라이언트에 올바른 오브제 ID로 연결 시작
-                self._start_sse_connection(device_id, object_id)
-                
-                return True
+                try:
+                    print(f"  📝 응답 JSON 파싱 중...")
+                    response_data = response.json()
+                    object_id = response_data.get("object_id")
+                    
+                    if not object_id:
+                        print(f"  ❌ 응답에 object_id가 없습니다: {response_data}")
+                        return None
+                    
+                    print(f"  ✅ 오브제 생성 성공: {object_id}")
+                    print(f"  📋 응답 데이터: {response_data}")
+                    
+                    return object_id
+                    
+                except ValueError as json_error:
+                    print(f"  ❌ 응답 JSON 파싱 오류: {json_error}")
+                    print(f"  📄 응답 텍스트: {response.text[:200]}...")
+                    return None
+                except Exception as parse_error:
+                    print(f"  ❌ 응답 처리 중 오류: {parse_error}")
+                    return None
+                    
             else:
                 print(f"  ❌ 오브제 생성 실패: {response.status_code}")
                 try:
                     error_data = response.json()
-                    print(f"  오류 상세: {json.dumps(error_data, indent=2)}")
+                    print(f"  📋 오류 상세: {json.dumps(error_data, indent=2)}")
                 except:
-                    print(f"  오류 텍스트: {response.text}")
+                    print(f"  📄 오류 텍스트: {response.text[:200]}...")
+                return None
                 
         except Exception as e:
-            print(f"  ❌ 오브제 생성 예외: {e}")
+            print(f"  ❌ 오브제 생성 치명적 오류: {e}")
             import traceback
             traceback.print_exc()
-        
-        return False
+            return None
     
     def _build_object_data(self, device_id: str, status_data: Dict[str, Any]) -> Dict[str, Any]:
         """장치 상태 데이터로부터 오브제 데이터 구성 (올바른 API 스키마 사용)"""
@@ -498,42 +740,6 @@ class AutoDeviceSync(QObject):
         
         return object_data
     
-    def _start_sse_connection(self, device_id: str, object_id: str):
-        """SSE 클라이언트에 올바른 오브제 ID로 연결 시작"""
-        try:
-            # SSE 매니저를 통해 클라이언트 참조 갱신
-            if self.sse_manager and hasattr(self.sse_manager, 'client'):
-                self.sse_client = self.sse_manager.client
-            
-            # SSE 클라이언트 참조가 없으면 설정 시도
-            if not self.sse_client:
-                self._setup_sse_client()
-            
-            # 여전히 참조가 없으면 지연된 연결 시도
-            if not self.sse_client:
-                print(f"  ⏰ SSE 클라이언트 참조 없음, 지연된 연결 시도")
-                QTimer.singleShot(1000, lambda: self._retry_sse_connection(device_id, object_id))
-                return
-            
-            # 기존 장치 ID 기반 연결이 있다면 중단
-            if hasattr(self.sse_client, 'stop_object_connection'):
-                self.sse_client.stop_object_connection(device_id)
-            
-            # 올바른 오브제 ID로 새 연결 시작
-            if hasattr(self.sse_client, 'start_object_connection'):
-                self.sse_client.start_object_connection(object_id)
-                print(f"  🔗 SSE 연결 시작: 오브제 {object_id}")
-            else:
-                print(f"  ⚠️ SSE 클라이언트에 start_object_connection 메서드가 없습니다.")
-                
-        except Exception as e:
-            print(f"  ❌ SSE 연결 시작 실패: {e}")
-    
-    def _retry_sse_connection(self, device_id: str, object_id: str):
-        """지연된 SSE 연결 재시도"""
-        print(f"  🔄 SSE 연결 재시도: 장치 {device_id} → 오브제 {object_id}")
-        self._start_sse_connection(device_id, object_id)
-    
     def get_object_id(self, device_id: str) -> str:
         """장치 ID에 해당하는 오브제 ID 반환"""
         return self.device_to_object_mapping.get(device_id)
@@ -556,6 +762,107 @@ class AutoDeviceSync(QObject):
             "connected_devices": self.device_manager.get_connected_devices(),
             "device_to_object_mapping": dict(self.device_to_object_mapping)
         }
+
+    def _delayed_sync_start(self, device_id: str):
+        """지연된 동기화 시작 (장치 상태 데이터 검증 후)"""
+        try:
+            print(f"🚀 [지연 동기화] 장치 {device_id} 상태 검증 시작...")
+            
+            # 장치 상태 데이터 검증
+            device_data = self.device_manager.get_device_status(device_id)
+            
+            if not device_data or not self._is_valid_device_data(device_data):
+                print(f"  ❌ 장치 {device_id} 상태 데이터가 없거나 유효하지 않음")
+                print(f"  📋 데이터 내용: {device_data}")
+                print(f"  💡 Zigbee 통신 문제 또는 장치 MCU 비활성 상태로 추정")
+                print(f"  🚫 서버 등록 건너뜀 (장치 번호만 검색된 상태)")
+                
+                # registered_devices에서 제거하여 나중에 재시도 가능하도록
+                self.registered_devices.discard(device_id)
+                return
+            
+            print(f"  ✅ 장치 {device_id} 상태 데이터 검증 성공")
+            print(f"  📊 유효한 데이터 키: {list(device_data.keys())}")
+            
+            # 큐에 추가하여 순차 처리
+            if device_id not in self.sync_queue:
+                self.sync_queue.append(device_id)
+                print(f"  🔄 장치 {device_id}를 동기화 큐에 추가")
+                
+                if not self.is_syncing:
+                    self._process_sync_queue()
+            else:
+                print(f"  ⚠️ 장치 {device_id}는 이미 큐에 있음")
+                
+        except Exception as e:
+            print(f"❌ [지연 동기화] 오류: {e}")
+            # 오류 시 registered_devices에서 제거하여 재시도 가능하도록
+            self.registered_devices.discard(device_id)
+            import traceback
+            traceback.print_exc()
+    
+    def _is_valid_device_data(self, device_data: Dict[str, Any]) -> bool:
+        """장치 상태 데이터가 유효한지 검증"""
+        if not device_data:
+            return False
+        
+        # 기본 필수 필드 확인
+        required_fields = ['device_id']
+        for field in required_fields:
+            if field not in device_data:
+                print(f"    ❌ 필수 필드 누락: {field}")
+                return False
+        
+        # 실제 장치 상태 데이터 확인 (motion, main_power 등)
+        has_motion_data = 'motion' in device_data and device_data['motion']
+        has_power_data = 'main_power' in device_data and device_data['main_power']
+        has_status_data = has_motion_data or has_power_data
+        
+        if not has_status_data:
+            print(f"    ❌ 실제 장치 상태 데이터 없음 (motion/main_power 데이터 부재)")
+            print(f"    💡 장치 번호만 검색되고 Zigbee 통신 또는 장치 MCU 문제로 추정")
+            return False
+        
+        print(f"    ✅ 유효한 장치 상태 데이터 확인됨")
+        return True
+
+    def _create_object_for_device(self, device_id: str):
+        """장치에 대한 오브제 생성 (메인 스레드에서 실행)"""
+        try:
+            print(f"  🔧 오브제 생성 시작...")
+            
+            # 메인 스레드에서 즉시 실행하도록 변경
+            self._perform_object_creation(device_id)
+            
+        except Exception as e:
+            print(f"  ❌ 오브제 생성 중 오류: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _perform_object_creation(self, device_id: str):
+        """실제 오브제 생성 작업 수행"""
+        try:
+            # 장치 상태 데이터 조회
+            status_data = self.device_manager.get_device_status(device_id)
+            if not status_data:
+                print(f"  ❌ 장치 {device_id} 상태 데이터를 찾을 수 없음")
+                return
+            
+            # 오브제 생성 요청
+            object_id = self._create_object(device_id, status_data)
+            if object_id:
+                # 매핑 저장
+                self.device_to_object_mapping[device_id] = object_id
+                print(f"  ✅ 매핑 저장: 장치 {device_id} → 오브제 {object_id}")
+                
+                # SSE 연결 시작
+                if self.sse_manager:
+                    self._start_sse_connection(object_id)
+                    
+        except Exception as e:
+            print(f"  ❌ 오브제 생성 작업 중 오류: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 class AutoSyncService:

@@ -63,12 +63,17 @@ class SSEEventClient(QObject):
             self.device_manager = None
     
     def _on_device_connected(self, device_id: str):
-        """새로운 장치 연결 시 자동으로 SSE 연결 시작"""
+        """새로운 장치 연결 시 자동으로 SSE 연결 시작 (비활성화)"""
+        # AutoDeviceSync에서 오브제 생성 후 올바른 object_id로 연결을 관리하므로
+        # 여기서는 자동 연결을 시작하지 않음
+        # 기존: 장치 ID로 직접 연결 → 404 오류 발생
+        # 변경: AutoDeviceSync에서 오브제 ID로 연결 관리
         self.logger.info(f"새로운 장치 감지됨, SSE 연결 시작: {device_id}")
+        self.logger.info(f"AutoDeviceSync에서 오브제 생성 후 연결 관리됨")
         
-        # 이미 연결된 경우 스킵
-        if device_id not in self.connections:
-            self.start_object_connection(device_id)
+        # 자동 연결 비활성화
+        # if device_id not in self.connections:
+        #     self.start_object_connection(device_id)
     
     def _on_device_status_updated(self, device_id: str, status_data: dict):
         """장치 상태 업데이트 시 SSE 연결 확인 (AutoDeviceSync에서 관리)"""

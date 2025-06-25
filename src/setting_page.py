@@ -427,12 +427,12 @@ class SettingPage(QWidget, Ui_SettingPage):
             protocol.id_scan_received.connect(self.on_id_scan_received)
             protocol.id_scan_received_connected = True
         
-        # 타이머 설정 (100ms 간격으로 스캔)
+        # 타이머 설정 (저사양 CPU 고려하여 200ms 간격으로 스캔)
         if self.scan_timer is None:
             self.scan_timer = QTimer()
             self.scan_timer.timeout.connect(self.scan_next_id)
             
-        self.scan_timer.start(100)  # 100ms 간격으로 스캔
+        self.scan_timer.start(200)  # 200ms 간격으로 스캔 (저사양 CPU 최적화)
         self.scan_next_id()  # 첫 번째 ID 즉시 스캔 시작
             
     def scan_next_id(self):

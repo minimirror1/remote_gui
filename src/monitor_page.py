@@ -163,76 +163,86 @@ class DeviceInfoWidget(QFrame):
         return f"{minutes:02d}:{seconds:02d}:{ms:03d}"
         
     def update_status(self, status_data):
-        """장치 상태 업데이트 - home_page.py의 update_status_info와 동일한 데이터 구조 사용"""
+        """장치 상태 업데이트 - home_page.py의 update_status_info와 동일한 데이터 구조 사용 (저사양 CPU 최적화)"""
         if not status_data:
             return
-            
-        # 메인 전원 상태 업데이트
-        if 'main_power' in status_data:
-            main_power_status = status_data['main_power']['status']
-            self.power_indicator.setPixmap(self.led_on if main_power_status else self.led_off)
         
-        # 모션 재생 상태 업데이트
-        if 'motion' in status_data:
-            motion_info = status_data['motion']
-            motion_status = motion_info.get('status', 'UNKNOWN')
-            self.motion_status_label.setText(f"Motion: {motion_status}")
+        # 저사양 CPU에서 UI 업데이트 빈도 제한
+        try:
+            # 메인 전원 상태 업데이트
+            if 'main_power' in status_data:
+                main_power_status = status_data['main_power']['status']
+                self.power_indicator.setPixmap(self.led_on if main_power_status else self.led_off)
             
-            # 모션 시간 정보 업데이트
-            current_time = motion_info.get('current', 0)  # ms 단위
-            end_time = motion_info.get('end', 0)  # ms 단위
+            # 모션 재생 상태 업데이트
+            if 'motion' in status_data:
+                motion_info = status_data['motion']
+                motion_status = motion_info.get('status', 'UNKNOWN')
+                self.motion_status_label.setText(f"Motion: {motion_status}")
+                
+                # 모션 시간 정보 업데이트 (CPU 부하 고려하여 간소화)
+                current_time = motion_info.get('current', 0)  # ms 단위
+                end_time = motion_info.get('end', 0)  # ms 단위
+                
+                # 진행률 업데이트 (계산 최소화)
+                if end_time > 0:
+                    progress = min(100, int((current_time / end_time) * 100))
+                    self.progress_bar.setValue(progress)
+                    
+                    # 시간 표시는 진행률이 변경될 때만 업데이트
+                    if progress != self.progress_bar.value():
+                        self.motion_time_label.setText(f"Time: {self._format_time_ms(current_time)} / {self._format_time_ms(end_time)}")
+                else:
+                    self.progress_bar.setValue(0)
+                    self.motion_time_label.setText("Time: 00:00:000 / 00:00:000")
             
-            self.motion_time_label.setText(f"Time: {self._format_time_ms(current_time)} / {self._format_time_ms(end_time)}")
+            # 연속구동시간 업데이트 (텍스트 변경 시에만)
+            if 'time' in status_data:
+                time_info = status_data['time']
+                new_runtime_text = f"Runtime: {time_info['hours']:02d}h{time_info['minutes']:02d}m{time_info['seconds']:02d}s"
+                if self.runtime_label.text() != new_runtime_text:
+                    self.runtime_label.setText(new_runtime_text)
             
-            # 진행률 업데이트
-            if end_time > 0:
-                progress = (current_time / end_time) * 100
-                self.progress_bar.setValue(int(progress))
-            else:
-                self.progress_bar.setValue(0)
-        
-        # 연속구동시간 업데이트
-        if 'time' in status_data:
-            time_info = status_data['time']
-            runtime_text = f"Runtime: {time_info['hours']:02d}h{time_info['minutes']:02d}m{time_info['seconds']:02d}s"
-            self.runtime_label.setText(runtime_text)
-        
-        # 회차 정보 업데이트
-        if 'count' in status_data:
-            count_info = status_data['count']
-            round_text = f"Round: {count_info['current']}/{count_info['total']}"
-            self.round_label.setText(round_text)
-        
-        # 전력 정보 업데이트
-        if 'power' in status_data:
-            power_info = status_data['power']
-            voltage = power_info['voltage'] / 100.0  # 전압값이 100배로 전송된다고 가정
-            current = power_info['current'] / 100.0  # 전류값이 100배로 전송된다고 가정
-            power = voltage * current  # 전력 계산
+            # 회차 정보 업데이트
+            if 'count' in status_data:
+                count_info = status_data['count']
+                new_round_text = f"Round: {count_info.get('current', 0)}/{count_info.get('total', 0)}"
+                if self.round_label.text() != new_round_text:
+                    self.round_label.setText(new_round_text)
             
-            energy_text = f"Power: {voltage:.1f}V / {current:.1f}A / {power:.1f}W"
-            self.energy_label.setText(energy_text)
-        
-        # 에러 정보 업데이트
-        if 'error' in status_data:
-            error_info = status_data['error']
-            error_flag = error_info['flag']
+            # 전력 정보 업데이트 (값 변경 시에만)
+            if 'power' in status_data:
+                power_info = status_data['power']
+                voltage = power_info.get('voltage', 0)
+                current = power_info.get('current', 0)
+                watt = voltage * current / 1000  # W 단위로 변환
+                new_energy_text = f"Power: {voltage:.1f}V / {current:.1f}A / {watt:.1f}W"
+                if self.energy_label.text() != new_energy_text:
+                    self.energy_label.setText(new_energy_text)
             
-            if error_flag:
-                # 에러가 있는 경우
-                can_id = error_info['can_id']
-                can_sub_id = error_info['can_sub_id']
-                error_code = error_info['code']
-                self.error_label.setText(f"Error: {can_id}-{can_sub_id} ({error_code})")
-                self.error_label.setStyleSheet(f"color: red; font-size: {self.default_font_size}px; font-weight: bold;")
-            else:
-                # 에러가 없는 경우
-                self.error_label.setText("Error: 정상")
-                self.error_label.setStyleSheet(f"color: green; font-size: {self.default_font_size}px;")
-        
-        # 마지막 업데이트 시간
-        current_time = QDateTime.currentDateTime().toString("hh:mm:ss")
-        self.last_update_label.setText(f"Last Update: {current_time}")
+            # 에러 정보 업데이트
+            if 'error' in status_data:
+                error_info = status_data['error']
+                if error_info.get('flag', False):
+                    error_text = f"Error: CAN {error_info.get('can_id', 0)}-{error_info.get('can_sub_id', 0)} Code:{error_info.get('code', 0)}"
+                    self.error_label.setText(error_text)
+                    self.error_label.setStyleSheet(f"color: red; font-size: {self.default_font_size}px;")
+                else:
+                    if self.error_label.text() != "Error: 정상":
+                        self.error_label.setText("Error: 정상")
+                        self.error_label.setStyleSheet(f"color: green; font-size: {self.default_font_size}px;")
+            
+            # 마지막 업데이트 시간 (초 단위로만 업데이트하여 부하 감소)
+            current_time = QDateTime.currentDateTime()
+            time_str = current_time.toString("hh:mm:ss")
+            new_update_text = f"Last Update: {time_str}"
+            if not hasattr(self, '_last_update_time') or self._last_update_time != time_str:
+                self._last_update_time = time_str
+                self.last_update_label.setText(new_update_text)
+                
+        except Exception as e:
+            print(f"장치 상태 업데이트 중 오류 (무시됨): {e}")
+            # 오류가 발생해도 계속 진행
 
 
 class MonitorPage(QWidget, Ui_Form):
@@ -261,10 +271,12 @@ class MonitorPage(QWidget, Ui_Form):
         # 상태 데이터 저장 (각 장치별) - 하위 호환성용
         self.device_status_data = {}  # device_id -> status_data
         
-        # 폴링 타이머 설정 (실제로는 프로토콜 시그널을 사용)
-        self.status_update_timer = QTimer()
-        self.status_update_timer.timeout.connect(self.request_status_update)
-        self.status_update_interval = 1000  # 1초마다 상태 요청
+        # 저사양 CPU 최적화: 타이머 간격 증가
+        self.update_timer = QTimer()
+        self.update_timer.timeout.connect(self.update_display)
+        self.update_timer.start(5000)  # 5초마다 업데이트 (기존 3초에서 증가)
+        
+        print("🔍 [DEBUG] 모니터 페이지 타이머 시작 (5초 간격)")  # 디버깅 출력 추가
         
         # UI 초기 설정
         self._setup_initial_ui()
@@ -286,6 +298,9 @@ class MonitorPage(QWidget, Ui_Form):
         self._update_connection_status(self.serial_manager.is_port_connected())
         
         print("MonitorPage: DeviceStatusManager를 통한 전역 상태 관리 활성화")
+        
+        # 이전 선택 상태 추적을 위한 변수 추가
+        self._last_selected_device_id = None
 
     def _setup_initial_ui(self):
         """초기 UI 설정"""
@@ -310,8 +325,8 @@ class MonitorPage(QWidget, Ui_Form):
             self.stop_monitoring()
             
         # 타이머 정지
-        if hasattr(self, 'status_update_timer') and self.status_update_timer:
-            self.status_update_timer.stop()
+        if hasattr(self, 'update_timer') and self.update_timer:
+            self.update_timer.stop()
             
         # SerialManager 연결 해제
         if hasattr(self, 'serial_manager') and self.serial_manager:
@@ -360,8 +375,10 @@ class MonitorPage(QWidget, Ui_Form):
         # 해당 장치 위젯 업데이트
         if widget_key in self.device_widgets:
             self.device_widgets[widget_key].update_status(status_data)
-            print(f"✓ 장치 ID {device_id} 위젯 업데이트 성공")
+            # 로그 출력을 줄이기 위해 성공 메시지 제거 (너무 빈번함)
+            # print(f"✓ 장치 ID {device_id} 위젯 업데이트 성공")
         else:
+            # 위젯을 찾을 수 없는 경우에만 로그 출력 (중요한 오류)
             print(f"✗ 장치 ID {device_id} 위젯을 찾을 수 없음")
             print(f"  등록된 위젯 키: {list(self.device_widgets.keys())}")
             
@@ -566,7 +583,7 @@ class MonitorPage(QWidget, Ui_Form):
         self.statusLabel.setText(f"Connected Devices: {count}")
 
     def start_monitoring(self):
-        """모니터링 시작"""
+        """모니터링 시작 - 저사양 CPU 최적화"""
         # 장치가 없으면 현재 연결된 시리얼 포트를 기반으로 생성
         if not self.monitored_devices:
             self._create_default_device()
@@ -575,12 +592,18 @@ class MonitorPage(QWidget, Ui_Form):
             QMessageBox.information(self, "정보", "모니터링할 장치가 없습니다.\n시리얼 포트가 연결되어 있는지 확인해주세요.")
             return
             
-        print("장치 모니터링 시작")
+        print("장치 모니터링 시작 (저사양 CPU 최적화 모드)")
         self.is_monitoring = True
         self.refreshButton.setText("모니터링 중지")
         
-        # 상태 업데이트 타이머 시작 (실제로는 프로토콜 시그널을 주로 사용)
-        self.status_update_timer.start(self.status_update_interval)
+        # GUI 응답성 확보를 위해 타이머 시작을 지연
+        QTimer.singleShot(500, self._start_monitoring_timer)  # 0.5초 후 타이머 시작
+        
+    def _start_monitoring_timer(self):
+        """모니터링 타이머 시작 (지연 실행)"""
+        if self.is_monitoring:  # 모니터링이 여전히 활성화된 경우에만
+            self.update_timer.start()
+            print(f"모니터링 타이머 시작됨 (간격: {self.update_timer.interval()}ms)")
         
     def stop_monitoring(self):
         """모니터링 중지"""
@@ -589,17 +612,27 @@ class MonitorPage(QWidget, Ui_Form):
         self.refreshButton.setText("Refresh")
         
         # 상태 업데이트 타이머 중지
-        self.status_update_timer.stop()
+        self.update_timer.stop()
 
     @Slot()
     def request_status_update(self):
-        """상태 업데이트 요청 (필요시)"""
+        """상태 업데이트 요청 (저사양 CPU 최적화)"""
         if not self.is_monitoring or not self.serial_manager.is_port_connected():
             return
             
-        # 실제로는 프로토콜 시그널로 상태가 들어오므로, 여기서는 별도 요청하지 않음
-        # 필요시 serial_commands를 통해 상태 조회 명령을 보낼 수 있음
-        pass
+        # 저사양 CPU에서 과부하 방지를 위해 간헐적으로만 실행
+        try:
+            # 실제로는 프로토콜 시그널로 상태가 들어오므로, 여기서는 별도 요청하지 않음
+            # 필요시 serial_commands를 통해 상태 조회 명령을 보낼 수 있음
+            
+            # 간단한 상태 체크만 수행 (CPU 부하 최소화)
+            device_count = len(self.monitored_devices)
+            if device_count > 0:
+                # 상태 라벨만 업데이트 (무거운 작업 생략)
+                self.update_device_count(device_count)
+        except Exception as e:
+            print(f"상태 업데이트 중 오류 (무시됨): {e}")
+            # 오류가 발생해도 모니터링은 계속 진행
 
     def get_device_status(self, device):
         """개별 장치의 상태를 확인 - DeviceStatusManager에서 최신 데이터 반환"""
@@ -707,3 +740,30 @@ class MonitorPage(QWidget, Ui_Form):
             'serial_connected': self.serial_manager.is_port_connected(),
             'status_manager_devices': total_devices  # DeviceStatusManager의 장치 개수
         }
+
+    @Slot()
+    def update_display(self):
+        """모니터링 페이지 업데이트"""
+        if self.is_monitoring:
+            # 장치 위젯들의 상태만 업데이트
+            for device in self.monitored_devices:
+                device_id = device.get('id', device.get('port', 'unknown'))
+                if device_id in self.device_widgets:
+                    status_data = self.get_device_status(device)
+                    self.device_widgets[device_id].update_status(status_data)
+
+    def select_all_devices_for_monitoring(self):
+        """전체 모니터링 모드에서 모든 장치를 선택"""
+        if hasattr(self, 'device_widgets') and self.device_widgets:
+            # 첫 번째 장치를 선택 (전체 모니터링에서는 하나만 선택)
+            first_device_id = list(self.device_widgets.keys())[0]
+            
+            # 상태가 변경된 경우에만 로그 출력
+            if self._last_selected_device_id != first_device_id:
+                print(f"통신 대상 장치 ID가 {first_device_id}로 설정되었습니다.")
+                print(f"전체 모니터링 모드: 장치 ID {first_device_id} 선택됨")
+                self._last_selected_device_id = first_device_id
+            
+            # DeviceStatusManager에게 선택된 장치 ID 전달
+            if hasattr(self, 'device_status_manager'):
+                self.device_status_manager.set_target_device_id(first_device_id)

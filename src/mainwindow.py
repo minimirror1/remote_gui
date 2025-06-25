@@ -24,10 +24,7 @@ from src.api.api_manager import ApiManager
 from src.api.sse_manager import SSEManager  # SSE 매니저 추가
 
 # 자동 동기화 서비스 임포트
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'net_test'))
-from auto_device_sync import AutoDeviceSync
+from net_test.auto_device_sync import AutoDeviceSync
 
 
 class MainWindow(QMainWindow):
@@ -66,12 +63,18 @@ class MainWindow(QMainWindow):
         self.sse_manager.connection_closed.connect(self.handle_sse_disconnected)
         
         # 자동 장치 동기화 서비스 초기화
+        print("🔍 [DEBUG] AutoDeviceSync 초기화 시작...")
         self.auto_device_sync = AutoDeviceSync()
+        print("🔍 [DEBUG] AutoDeviceSync 생성 완료")
         
         # 자동 동기화 서비스에 SSE 매니저 참조 전달
+        print("🔍 [DEBUG] SSE 매니저 참조 전달 중...")
         self.auto_device_sync.set_sse_manager(self.sse_manager)
+        print("🔍 [DEBUG] SSE 매니저 참조 전달 완료")
         
-        self.auto_device_sync.start_service()
+        # 자동 장치 동기화 서비스 시작 (지연 실행으로 GUI 블로킹 방지)
+        print("🔍 [DEBUG] 자동 동기화 서비스 지연 시작 예약 (5초 후)")
+        QTimer.singleShot(5000, self._start_auto_device_sync)  # 5초 후 시작
         
         # 스레드 초기화
         self.serial_thread = SerialReaderThread()
@@ -198,24 +201,34 @@ class MainWindow(QMainWindow):
 
     def init_sse_connection(self):
         """SSE 연결 초기화 및 시작"""
+        print("🔍 [DEBUG] SSE 연결 초기화 시작...")
+        
         # SSE 연결 설정 (새로운 API 구조)
+        print("🔍 [DEBUG] SSE 매니저 설정 중...")
         self.sse_manager.configure(
             base_url="https://robot-monitor-dev.systemiic.com",
             headers={}  # Bearer 토큰이 필요하면 여기에 추가
         )
+        print("🔍 [DEBUG] SSE 매니저 설정 완료")
         
         # 특정 이벤트 타입에 대한 핸들러 등록 (새로운 시그널 구조)
+        print("🔍 [DEBUG] SSE 이벤트 핸들러 등록 중...")
         self.sse_manager.register_handler("power", self.handle_power_event_data)
         self.sse_manager.register_handler("message", self.handle_message_event_data)
+        print("🔍 [DEBUG] SSE 이벤트 핸들러 등록 완료")
         
         # 새로운 시그널 연결 (object_id 포함)
+        print("🔍 [DEBUG] SSE 시그널 연결 중...")
         self.sse_manager.event_received.connect(self.handle_sse_event)
         self.sse_manager.connection_error.connect(self.handle_sse_error)
         self.sse_manager.connection_established.connect(self.handle_sse_connected)
         self.sse_manager.connection_closed.connect(self.handle_sse_disconnected)
+        print("🔍 [DEBUG] SSE 시그널 연결 완료")
         
         # SSE 연결 시작 (모든 오브제 연결)
+        print("🔍 [DEBUG] SSE 연결 시작 중... (여기서 멈출 수 있음)")
         self.sse_manager.start()
+        print("🔍 [DEBUG] ✅ SSE 연결 시작 완료")
         self.logger.info("SSE 연결이 시작되었습니다.")
 
     @Slot(str, dict)
@@ -343,17 +356,42 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def closeEvent(self, event):
-        """프로그램 종료 시 정리 작업"""
-        # 자동 장치 동기화 서비스 정리
-        if hasattr(self, 'auto_device_sync'):
-            self.auto_device_sync.stop_service()
+        """애플리케이션 종료 시 리소스 정리"""
+        try:
+            print("애플리케이션 종료 중...")
             
-        # SSE 연결 종료
-        self.sse_manager.stop()
-        
-        # 시리얼 연결 종료
-        self.serial_manager.stop_serial_thread()
-        super().closeEvent(event)
+            # 자동 동기화 서비스 중지 (가장 먼저)
+            if hasattr(self, 'auto_device_sync'):
+                print("자동 동기화 서비스 중지 중...")
+                self.auto_device_sync.stop()
+                
+            # SSE 연결 중지
+            if hasattr(self, 'sse_manager'):
+                print("SSE 연결 중지 중...")
+                self.sse_manager.stop()
+                
+            # 장치 상태 매니저 정리
+            if hasattr(self, 'device_status_manager'):
+                print("장치 상태 매니저 정리 중...")
+                self.device_status_manager.cleanup()
+                
+            # 시리얼 매니저 정리
+            if hasattr(self, 'serial_manager'):
+                print("시리얼 매니저 정리 중...")
+                self.serial_manager.cleanup()
+                
+            # 모든 스레드가 정리될 때까지 잠시 대기
+            print("스레드 정리 대기 중...")
+            import time
+            time.sleep(0.5)  # 500ms 대기
+                
+            print("리소스 정리 완료")
+            
+        except Exception as e:
+            print(f"종료 중 오류: {e}")
+        finally:
+            # 부모 클래스의 closeEvent 호출
+            super().closeEvent(event)
 
     def __del__(self):
         """소멸자"""
@@ -398,6 +436,23 @@ class MainWindow(QMainWindow):
         """API 에러 처리"""
         self.logger.error(f"API 오류: {error_msg}")
         # 에러 처리 로직 구현
+
+    def _start_auto_device_sync(self):
+        """자동 장치 동기화 서비스 시작 (지연 실행)"""
+        try:
+            print("🔍 [DEBUG] 자동 동기화 서비스 시작...")
+            
+            # SSE 매니저 참조 전달 (동적 매핑을 위해 필요)
+            self.auto_device_sync.set_sse_manager(self.sse_manager)
+            
+            # 다중 장치 환경에서 안정성을 위해 체크 간격을 20초로 증가
+            self.auto_device_sync.start(check_interval=20000)  # 간단한 인터페이스 사용
+            
+            print("🔍 [DEBUG] 자동 동기화 서비스 시작 완료")
+        except Exception as e:
+            print(f"🔍 [DEBUG] ❌ 자동 동기화 서비스 시작 실패: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 class SerialReaderThread(QThread):
