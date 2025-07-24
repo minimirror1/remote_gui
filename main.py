@@ -5,15 +5,10 @@ from PySide6.QtWidgets import QApplication, QSplashScreen
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap
 from src.mainwindow import MainWindow
+from src.config import ConfigManager
 import _icons_rc
 import os
 from datetime import datetime
-
-# ============================================================================
-# 로그 파일 생성 설정 (하드코딩)
-# ============================================================================
-ENABLE_LOG_FILE = False  # True: 로그 파일 생성, False: 콘솔만 출력
-# ============================================================================
 
 class TeeOutput:
     """표준 출력을 콘솔과 파일에 동시에 출력하는 클래스"""
@@ -40,7 +35,7 @@ class TeeOutput:
         except Exception:
             pass
 
-def setup_logging():
+def setup_logging(enable_log_file: bool = True):
     """로깅 설정을 초기화합니다."""
     # 로거 설정
     logger = logging.getLogger()
@@ -56,7 +51,7 @@ def setup_logging():
     logger.addHandler(console_handler)
     
     # 로그 파일 생성 여부 확인
-    if not ENABLE_LOG_FILE:
+    if not enable_log_file:
         logger.info("로그 파일 생성이 비활성화되었습니다. 콘솔 출력만 사용됩니다.")
         return
     
@@ -73,7 +68,7 @@ def setup_logging():
     log_filename = f"remote_gui_log_{timestamp}.txt"
     log_filepath = os.path.join(exe_dir, log_filename)
     
-    # 파일 핸들러 (ENABLE_LOG_FILE이 True일 때만 생성)
+    # 파일 핸들러 (enable_log_file이 True일 때만 생성)
     try:
         file_handler = logging.FileHandler(log_filepath, encoding='utf-8')
         file_handler.setLevel(logging.INFO)
@@ -108,10 +103,18 @@ def setup_logging():
 def main():
     """애플리케이션의 메인 진입점입니다."""
     try:
-        # 로깅 설정
-        setup_logging()
+        # 설정 관리자 초기화
+        config_manager = ConfigManager.get_instance()
+        app_config = config_manager.get_config()
+        
+        # 설정에서 로그 파일 생성 여부 가져오기
+        enable_log_file = app_config.enable_log_file
+        
+        # 로깅 설정 (설정 파일의 값 사용)
+        setup_logging(enable_log_file)
         logger = logging.getLogger(__name__)
         logger.info("애플리케이션 시작")
+        logger.info(f"설정 로드 완료 - 로그 파일: {enable_log_file}")
 
         # QApplication 인스턴스 생성
         app = QApplication(sys.argv)
@@ -170,8 +173,8 @@ def main():
         except Exception as e:
             logger.error(f"DeviceStatusManager 정리 중 오류: {e}")
         
-        # 로그 파일 핸들러 정리 (ENABLE_LOG_FILE이 True일 때만)
-        if ENABLE_LOG_FILE:
+        # 로그 파일 핸들러 정리 (enable_log_file이 True일 때만)
+        if enable_log_file:
             try:
                 # 표준 출력/에러 복원
                 if hasattr(sys.stdout, 'file_stream'):

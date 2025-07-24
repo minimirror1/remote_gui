@@ -1,0 +1,22 @@
+{
+  "config_version": "1.0.0",
+  "basic_info": {
+    "country": "대한민국",
+    "region": "서울특별시",
+    "store_name": "시스테믹 본점",
+    "business_hours": {
+      "monday": "09:00-18:00",
+      "tuesday": "09:00-18:00",
+      "wednesday": "09:00-18:00",
+      "thursday": "09:00-18:00",
+      "friday": "09:00-18:00",
+      "saturday": "10:00-16:00",
+      "sunday": "휴무"
+    }
+  },
+  "program_settings": {
+    "schedule_function": true,
+    "sync_time_ms": 1500.0
+  },
+  "enable_log_file": true
+} 
