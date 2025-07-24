@@ -9,6 +9,12 @@ import _icons_rc
 import os
 from datetime import datetime
 
+# ============================================================================
+# 로그 파일 생성 설정 (하드코딩)
+# ============================================================================
+ENABLE_LOG_FILE = False  # True: 로그 파일 생성, False: 콘솔만 출력
+# ============================================================================
+
 class TeeOutput:
     """표준 출력을 콘솔과 파일에 동시에 출력하는 클래스"""
     def __init__(self, console_stream, file_stream):
@@ -36,6 +42,24 @@ class TeeOutput:
 
 def setup_logging():
     """로깅 설정을 초기화합니다."""
+    # 로거 설정
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    
+    # 포맷터 생성
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # 콘솔 핸들러 (항상 활성화)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # 로그 파일 생성 여부 확인
+    if not ENABLE_LOG_FILE:
+        logger.info("로그 파일 생성이 비활성화되었습니다. 콘솔 출력만 사용됩니다.")
+        return
+    
     # 실행 파일의 경로 가져오기
     if getattr(sys, 'frozen', False):
         # PyInstaller로 빌드된 실행 파일인 경우
@@ -49,20 +73,7 @@ def setup_logging():
     log_filename = f"remote_gui_log_{timestamp}.txt"
     log_filepath = os.path.join(exe_dir, log_filename)
     
-    # 로거 설정
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    
-    # 포맷터 생성
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
-    # 콘솔 핸들러 (기존 기능 유지)
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    
-    # 파일 핸들러 (새로운 기능)
+    # 파일 핸들러 (ENABLE_LOG_FILE이 True일 때만 생성)
     try:
         file_handler = logging.FileHandler(log_filepath, encoding='utf-8')
         file_handler.setLevel(logging.INFO)
@@ -159,21 +170,22 @@ def main():
         except Exception as e:
             logger.error(f"DeviceStatusManager 정리 중 오류: {e}")
         
-        # 로그 파일 핸들러 정리
-        try:
-            # 표준 출력/에러 복원
-            if hasattr(sys.stdout, 'file_stream'):
-                sys.stdout.file_stream.close()
-            if hasattr(sys.stderr, 'file_stream'):
-                sys.stderr.file_stream.close()
-            
-            # 로깅 핸들러 정리
-            for handler in logging.getLogger().handlers[:]:
-                if isinstance(handler, logging.FileHandler):
-                    handler.close()
-                    logging.getLogger().removeHandler(handler)
-        except Exception as e:
-            logger.warning(f"로그 파일 정리 중 오류: {e}")
+        # 로그 파일 핸들러 정리 (ENABLE_LOG_FILE이 True일 때만)
+        if ENABLE_LOG_FILE:
+            try:
+                # 표준 출력/에러 복원
+                if hasattr(sys.stdout, 'file_stream'):
+                    sys.stdout.file_stream.close()
+                if hasattr(sys.stderr, 'file_stream'):
+                    sys.stderr.file_stream.close()
+                
+                # 로깅 핸들러 정리
+                for handler in logging.getLogger().handlers[:]:
+                    if isinstance(handler, logging.FileHandler):
+                        handler.close()
+                        logging.getLogger().removeHandler(handler)
+            except Exception as e:
+                logger.warning(f"로그 파일 정리 중 오류: {e}")
         
         logger.info("애플리케이션 종료")
         sys.exit(exit_code)
