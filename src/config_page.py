@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QMessageBox, QFileDialog
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Slot, QTime
 from src.ui.config_page_ui import Ui_ConfigPage
 from src.config import ConfigManager, AppConfig, BasicInfo, BusinessHours, ProgramSettings
 import json
@@ -39,6 +39,22 @@ class ConfigPage(QWidget):
         # 동기화 시간 설정
         self.ui.syncTimeDoubleSpinBox.setSuffix(" ms")
         self.ui.syncTimeDoubleSpinBox.setDecimals(0)
+        
+        # TimeEdit 형식 설정
+        self.ui.mondayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.mondayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.tuesdayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.tuesdayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.wednesdayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.wednesdayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.thursdayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.thursdayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.fridayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.fridayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.saturdayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.saturdayEndTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.sundayStartTimeEdit.setDisplayFormat("HH:mm")
+        self.ui.sundayEndTimeEdit.setDisplayFormat("HH:mm")
 
     def connect_change_signals(self):
         """설정 변경 감지를 위한 시그널 연결"""
@@ -47,14 +63,48 @@ class ConfigPage(QWidget):
         self.ui.regionLineEdit.textChanged.connect(self.on_config_changed)
         self.ui.storeNameLineEdit.textChanged.connect(self.on_config_changed)
         
-        # 영업 시간 필드
-        self.ui.mondayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.tuesdayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.wednesdayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.thursdayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.fridayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.saturdayLineEdit.textChanged.connect(self.on_config_changed)
-        self.ui.sundayLineEdit.textChanged.connect(self.on_config_changed)
+        # 영업 시간 필드 - 새로운 TimeEdit과 CheckBox 구조
+        # 월요일
+        self.ui.mondayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.mondayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.mondayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.mondayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 화요일
+        self.ui.tuesdayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.tuesdayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.tuesdayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.tuesdayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 수요일
+        self.ui.wednesdayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.wednesdayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.wednesdayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.wednesdayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 목요일
+        self.ui.thursdayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.thursdayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.thursdayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.thursdayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 금요일
+        self.ui.fridayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.fridayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.fridayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.fridayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 토요일
+        self.ui.saturdayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.saturdayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.saturdayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.saturdayClosedCheckBox.toggled.connect(self.on_closed_toggled)
+        
+        # 일요일
+        self.ui.sundayStartTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.sundayEndTimeEdit.timeChanged.connect(self.on_config_changed)
+        self.ui.sundayClosedCheckBox.toggled.connect(self.on_config_changed)
+        self.ui.sundayClosedCheckBox.toggled.connect(self.on_closed_toggled)
         
         # 프로그램 설정
         self.ui.scheduleFunctionCheckBox.toggled.connect(self.on_config_changed)
@@ -62,6 +112,85 @@ class ConfigPage(QWidget):
         
         # 로그 설정
         self.ui.enableLogFileCheckBox.toggled.connect(self.on_config_changed)
+
+    def time_string_to_qtime(self, time_str):
+        """시간 문자열을 QTime으로 변환 (예: "09:00" -> QTime(9, 0))"""
+        try:
+            if time_str == "휴무" or not time_str:
+                return QTime(9, 0)  # 기본값
+            hour, minute = map(int, time_str.split(':'))
+            return QTime(hour, minute)
+        except:
+            return QTime(9, 0)  # 에러 시 기본값
+
+    def business_hours_string_to_times(self, hours_str):
+        """영업시간 문자열을 시작/종료 시간으로 분리 (예: "09:00-18:00" -> ("09:00", "18:00", False))"""
+        try:
+            if hours_str == "휴무" or not hours_str:
+                return "09:00", "18:00", True  # 휴무일
+            start_time, end_time = hours_str.split('-')
+            return start_time.strip(), end_time.strip(), False
+        except:
+            return "09:00", "18:00", False  # 에러 시 기본값
+
+    def times_to_business_hours_string(self, start_time_edit, end_time_edit, closed_checkbox):
+        """TimeEdit과 CheckBox에서 영업시간 문자열 생성"""
+        if closed_checkbox.isChecked():
+            return "휴무"
+        start_str = start_time_edit.time().toString("HH:mm")
+        end_str = end_time_edit.time().toString("HH:mm")
+        return f"{start_str}-{end_str}"
+
+    @Slot()
+    def on_closed_toggled(self):
+        """휴무일 체크박스 토글 시 TimeEdit 활성화/비활성화"""
+        sender = self.sender()
+        
+        # 각 요일의 휴무 체크박스에 따라 해당 TimeEdit 활성화/비활성화
+        if sender == self.ui.mondayClosedCheckBox:
+            self.ui.mondayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.mondayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.tuesdayClosedCheckBox:
+            self.ui.tuesdayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.tuesdayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.wednesdayClosedCheckBox:
+            self.ui.wednesdayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.wednesdayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.thursdayClosedCheckBox:
+            self.ui.thursdayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.thursdayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.fridayClosedCheckBox:
+            self.ui.fridayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.fridayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.saturdayClosedCheckBox:
+            self.ui.saturdayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.saturdayEndTimeEdit.setEnabled(not sender.isChecked())
+        elif sender == self.ui.sundayClosedCheckBox:
+            self.ui.sundayStartTimeEdit.setEnabled(not sender.isChecked())
+            self.ui.sundayEndTimeEdit.setEnabled(not sender.isChecked())
+
+    def update_time_edits_enabled_state(self):
+        """모든 요일의 TimeEdit 활성화/비활성화 상태를 업데이트"""
+        self.ui.mondayStartTimeEdit.setEnabled(not self.ui.mondayClosedCheckBox.isChecked())
+        self.ui.mondayEndTimeEdit.setEnabled(not self.ui.mondayClosedCheckBox.isChecked())
+        
+        self.ui.tuesdayStartTimeEdit.setEnabled(not self.ui.tuesdayClosedCheckBox.isChecked())
+        self.ui.tuesdayEndTimeEdit.setEnabled(not self.ui.tuesdayClosedCheckBox.isChecked())
+        
+        self.ui.wednesdayStartTimeEdit.setEnabled(not self.ui.wednesdayClosedCheckBox.isChecked())
+        self.ui.wednesdayEndTimeEdit.setEnabled(not self.ui.wednesdayClosedCheckBox.isChecked())
+        
+        self.ui.thursdayStartTimeEdit.setEnabled(not self.ui.thursdayClosedCheckBox.isChecked())
+        self.ui.thursdayEndTimeEdit.setEnabled(not self.ui.thursdayClosedCheckBox.isChecked())
+        
+        self.ui.fridayStartTimeEdit.setEnabled(not self.ui.fridayClosedCheckBox.isChecked())
+        self.ui.fridayEndTimeEdit.setEnabled(not self.ui.fridayClosedCheckBox.isChecked())
+        
+        self.ui.saturdayStartTimeEdit.setEnabled(not self.ui.saturdayClosedCheckBox.isChecked())
+        self.ui.saturdayEndTimeEdit.setEnabled(not self.ui.saturdayClosedCheckBox.isChecked())
+        
+        self.ui.sundayStartTimeEdit.setEnabled(not self.ui.sundayClosedCheckBox.isChecked())
+        self.ui.sundayEndTimeEdit.setEnabled(not self.ui.sundayClosedCheckBox.isChecked())
 
     def load_current_config(self):
         """현재 설정을 UI에 로드"""
@@ -75,13 +204,51 @@ class ConfigPage(QWidget):
             
             # 영업 시간 로드
             business_hours = config.basic_info.business_hours
-            self.ui.mondayLineEdit.setText(business_hours.monday)
-            self.ui.tuesdayLineEdit.setText(business_hours.tuesday)
-            self.ui.wednesdayLineEdit.setText(business_hours.wednesday)
-            self.ui.thursdayLineEdit.setText(business_hours.thursday)
-            self.ui.fridayLineEdit.setText(business_hours.friday)
-            self.ui.saturdayLineEdit.setText(business_hours.saturday)
-            self.ui.sundayLineEdit.setText(business_hours.sunday)
+            
+            # 월요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.monday)
+            self.ui.mondayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.mondayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.mondayClosedCheckBox.setChecked(is_closed)
+            
+            # 화요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.tuesday)
+            self.ui.tuesdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.tuesdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.tuesdayClosedCheckBox.setChecked(is_closed)
+            
+            # 수요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.wednesday)
+            self.ui.wednesdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.wednesdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.wednesdayClosedCheckBox.setChecked(is_closed)
+            
+            # 목요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.thursday)
+            self.ui.thursdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.thursdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.thursdayClosedCheckBox.setChecked(is_closed)
+            
+            # 금요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.friday)
+            self.ui.fridayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.fridayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.fridayClosedCheckBox.setChecked(is_closed)
+            
+            # 토요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.saturday)
+            self.ui.saturdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.saturdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.saturdayClosedCheckBox.setChecked(is_closed)
+            
+            # 일요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.sunday)
+            self.ui.sundayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.sundayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.sundayClosedCheckBox.setChecked(is_closed)
+            
+            # 휴무일 체크박스 상태에 따라 TimeEdit 활성화/비활성화
+            self.update_time_edits_enabled_state()
             
             # 프로그램 설정 로드
             self.ui.scheduleFunctionCheckBox.setChecked(config.program_settings.schedule_function)
@@ -109,13 +276,20 @@ class ConfigPage(QWidget):
             config.basic_info.store_name = self.ui.storeNameLineEdit.text()
             
             # 영업 시간 업데이트
-            config.basic_info.business_hours.monday = self.ui.mondayLineEdit.text()
-            config.basic_info.business_hours.tuesday = self.ui.tuesdayLineEdit.text()
-            config.basic_info.business_hours.wednesday = self.ui.wednesdayLineEdit.text()
-            config.basic_info.business_hours.thursday = self.ui.thursdayLineEdit.text()
-            config.basic_info.business_hours.friday = self.ui.fridayLineEdit.text()
-            config.basic_info.business_hours.saturday = self.ui.saturdayLineEdit.text()
-            config.basic_info.business_hours.sunday = self.ui.sundayLineEdit.text()
+            config.basic_info.business_hours.monday = self.times_to_business_hours_string(
+                self.ui.mondayStartTimeEdit, self.ui.mondayEndTimeEdit, self.ui.mondayClosedCheckBox)
+            config.basic_info.business_hours.tuesday = self.times_to_business_hours_string(
+                self.ui.tuesdayStartTimeEdit, self.ui.tuesdayEndTimeEdit, self.ui.tuesdayClosedCheckBox)
+            config.basic_info.business_hours.wednesday = self.times_to_business_hours_string(
+                self.ui.wednesdayStartTimeEdit, self.ui.wednesdayEndTimeEdit, self.ui.wednesdayClosedCheckBox)
+            config.basic_info.business_hours.thursday = self.times_to_business_hours_string(
+                self.ui.thursdayStartTimeEdit, self.ui.thursdayEndTimeEdit, self.ui.thursdayClosedCheckBox)
+            config.basic_info.business_hours.friday = self.times_to_business_hours_string(
+                self.ui.fridayStartTimeEdit, self.ui.fridayEndTimeEdit, self.ui.fridayClosedCheckBox)
+            config.basic_info.business_hours.saturday = self.times_to_business_hours_string(
+                self.ui.saturdayStartTimeEdit, self.ui.saturdayEndTimeEdit, self.ui.saturdayClosedCheckBox)
+            config.basic_info.business_hours.sunday = self.times_to_business_hours_string(
+                self.ui.sundayStartTimeEdit, self.ui.sundayEndTimeEdit, self.ui.sundayClosedCheckBox)
             
             # 프로그램 설정 업데이트
             config.program_settings.schedule_function = self.ui.scheduleFunctionCheckBox.isChecked()
@@ -238,13 +412,52 @@ class ConfigPage(QWidget):
             self.ui.storeNameLineEdit.setText(config.basic_info.store_name)
             
             # 영업 시간 적용
-            self.ui.mondayLineEdit.setText(config.basic_info.business_hours.monday)
-            self.ui.tuesdayLineEdit.setText(config.basic_info.business_hours.tuesday)
-            self.ui.wednesdayLineEdit.setText(config.basic_info.business_hours.wednesday)
-            self.ui.thursdayLineEdit.setText(config.basic_info.business_hours.thursday)
-            self.ui.fridayLineEdit.setText(config.basic_info.business_hours.friday)
-            self.ui.saturdayLineEdit.setText(config.basic_info.business_hours.saturday)
-            self.ui.sundayLineEdit.setText(config.basic_info.business_hours.sunday)
+            business_hours = config.basic_info.business_hours
+            
+            # 월요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.monday)
+            self.ui.mondayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.mondayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.mondayClosedCheckBox.setChecked(is_closed)
+            
+            # 화요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.tuesday)
+            self.ui.tuesdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.tuesdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.tuesdayClosedCheckBox.setChecked(is_closed)
+            
+            # 수요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.wednesday)
+            self.ui.wednesdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.wednesdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.wednesdayClosedCheckBox.setChecked(is_closed)
+            
+            # 목요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.thursday)
+            self.ui.thursdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.thursdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.thursdayClosedCheckBox.setChecked(is_closed)
+            
+            # 금요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.friday)
+            self.ui.fridayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.fridayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.fridayClosedCheckBox.setChecked(is_closed)
+            
+            # 토요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.saturday)
+            self.ui.saturdayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.saturdayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.saturdayClosedCheckBox.setChecked(is_closed)
+            
+            # 일요일
+            start_time, end_time, is_closed = self.business_hours_string_to_times(business_hours.sunday)
+            self.ui.sundayStartTimeEdit.setTime(self.time_string_to_qtime(start_time))
+            self.ui.sundayEndTimeEdit.setTime(self.time_string_to_qtime(end_time))
+            self.ui.sundayClosedCheckBox.setChecked(is_closed)
+            
+            # 휴무일 체크박스 상태에 따라 TimeEdit 활성화/비활성화
+            self.update_time_edits_enabled_state()
             
             # 프로그램 설정 적용
             self.ui.scheduleFunctionCheckBox.setChecked(config.program_settings.schedule_function)

@@ -24,22 +24,22 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>782</width>
-        <height>800</height>
+        <width>768</width>
+        <height>653</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
         <widget class="QGroupBox" name="basicInfoGroupBox">
-         <property name="title">
-          <string>기본 정보</string>
-         </property>
          <property name="font">
           <font>
            <family>나눔고딕</family>
            <pointsize>12</pointsize>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="title">
+          <string>기본 정보</string>
          </property>
          <layout class="QFormLayout" name="basicInfoFormLayout">
           <item row="0" column="0">
@@ -89,9 +89,6 @@
        </item>
        <item>
         <widget class="QGroupBox" name="businessHoursGroupBox">
-         <property name="title">
-          <string>영업 시간</string>
-         </property>
          <property name="font">
           <font>
            <family>나눔고딕</family>
@@ -99,7 +96,10 @@
            <bold>true</bold>
           </font>
          </property>
-         <layout class="QFormLayout" name="businessHoursFormLayout">
+         <property name="title">
+          <string>영업 시간</string>
+         </property>
+         <layout class="QGridLayout" name="businessHoursGridLayout">
           <item row="0" column="0">
            <widget class="QLabel" name="mondayLabel">
             <property name="text">
@@ -108,9 +108,44 @@
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QLineEdit" name="mondayLineEdit">
+           <widget class="QTimeEdit" name="mondayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="mondayToLabel">
             <property name="text">
-             <string>09:00-18:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QTimeEdit" name="mondayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
+           <widget class="QCheckBox" name="mondayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -122,9 +157,44 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLineEdit" name="tuesdayLineEdit">
+           <widget class="QTimeEdit" name="tuesdayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="tuesdayToLabel">
             <property name="text">
-             <string>09:00-18:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QTimeEdit" name="tuesdayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4">
+           <widget class="QCheckBox" name="tuesdayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -136,9 +206,44 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLineEdit" name="wednesdayLineEdit">
+           <widget class="QTimeEdit" name="wednesdayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="wednesdayToLabel">
             <property name="text">
-             <string>09:00-18:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QTimeEdit" name="wednesdayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4">
+           <widget class="QCheckBox" name="wednesdayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -150,9 +255,44 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLineEdit" name="thursdayLineEdit">
+           <widget class="QTimeEdit" name="thursdayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QLabel" name="thursdayToLabel">
             <property name="text">
-             <string>09:00-18:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QTimeEdit" name="thursdayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="4">
+           <widget class="QCheckBox" name="thursdayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -164,9 +304,44 @@
            </widget>
           </item>
           <item row="4" column="1">
-           <widget class="QLineEdit" name="fridayLineEdit">
+           <widget class="QTimeEdit" name="fridayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLabel" name="fridayToLabel">
             <property name="text">
-             <string>09:00-18:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QTimeEdit" name="fridayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="4">
+           <widget class="QCheckBox" name="fridayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -178,9 +353,44 @@
            </widget>
           </item>
           <item row="5" column="1">
-           <widget class="QLineEdit" name="saturdayLineEdit">
+           <widget class="QTimeEdit" name="saturdayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>10</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="QLabel" name="saturdayToLabel">
             <property name="text">
-             <string>10:00-16:00</string>
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3">
+           <widget class="QTimeEdit" name="saturdayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>16</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="4">
+           <widget class="QCheckBox" name="saturdayClosedCheckBox">
+            <property name="text">
+             <string>휴무</string>
             </property>
            </widget>
           </item>
@@ -192,9 +402,47 @@
            </widget>
           </item>
           <item row="6" column="1">
-           <widget class="QLineEdit" name="sundayLineEdit">
+           <widget class="QTimeEdit" name="sundayStartTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>9</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QLabel" name="sundayToLabel">
+            <property name="text">
+             <string> ~ </string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QTimeEdit" name="sundayEndTimeEdit">
+            <property name="displayFormat">
+             <string>HH:mm</string>
+            </property>
+            <property name="time">
+             <time>
+              <hour>18</hour>
+              <minute>0</minute>
+              <second>0</second>
+             </time>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="4">
+           <widget class="QCheckBox" name="sundayClosedCheckBox">
             <property name="text">
              <string>휴무</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -203,15 +451,15 @@
        </item>
        <item>
         <widget class="QGroupBox" name="programSettingsGroupBox">
-         <property name="title">
-          <string>프로그램 설정</string>
-         </property>
          <property name="font">
           <font>
            <family>나눔고딕</family>
            <pointsize>12</pointsize>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="title">
+          <string>프로그램 설정</string>
          </property>
          <layout class="QFormLayout" name="programSettingsFormLayout">
           <item row="0" column="0">
@@ -259,15 +507,15 @@
        </item>
        <item>
         <widget class="QGroupBox" name="logSettingsGroupBox">
-         <property name="title">
-          <string>로그 설정</string>
-         </property>
          <property name="font">
           <font>
            <family>나눔고딕</family>
            <pointsize>12</pointsize>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="title">
+          <string>로그 설정</string>
          </property>
          <layout class="QFormLayout" name="logSettingsFormLayout">
           <item row="0" column="0">
@@ -292,15 +540,15 @@
        </item>
        <item>
         <widget class="QGroupBox" name="configVersionGroupBox">
-         <property name="title">
-          <string>설정 버전</string>
-         </property>
          <property name="font">
           <font>
            <family>나눔고딕</family>
            <pointsize>12</pointsize>
            <bold>true</bold>
           </font>
+         </property>
+         <property name="title">
+          <string>설정 버전</string>
          </property>
          <layout class="QFormLayout" name="configVersionFormLayout">
           <item row="0" column="0">
@@ -361,7 +609,7 @@
          <string>불러오기</string>
         </property>
         <property name="icon">
-         <iconset resource="../resources/icons/_icons.qrc">
+         <iconset>
           <normaloff>:/feather/icons/feather/folder-open.png</normaloff>:/feather/icons/feather/folder-open.png</iconset>
         </property>
        </widget>

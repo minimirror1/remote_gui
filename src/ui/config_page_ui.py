@@ -16,9 +16,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLayout,
-    QFrame, QGroupBox, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QScrollArea, QSizePolicy,
-    QSpacerItem, QVBoxLayout, QWidget)
+    QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QScrollArea,
+    QSizePolicy, QSpacerItem, QTimeEdit, QVBoxLayout,
+    QWidget)
 import _icons_rc
 
 class Ui_ConfigPage(object):
@@ -33,7 +34,7 @@ class Ui_ConfigPage(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QWidget()
         self.scrollAreaWidgetContents.setObjectName(u"scrollAreaWidgetContents")
-        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 782, 800))
+        self.scrollAreaWidgetContents.setGeometry(QRect(0, 0, 768, 653))
         self.verticalLayout_2 = QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.basicInfoGroupBox = QGroupBox(self.scrollAreaWidgetContents)
@@ -81,77 +82,197 @@ class Ui_ConfigPage(object):
         self.businessHoursGroupBox = QGroupBox(self.scrollAreaWidgetContents)
         self.businessHoursGroupBox.setObjectName(u"businessHoursGroupBox")
         self.businessHoursGroupBox.setFont(font)
-        self.businessHoursFormLayout = QFormLayout(self.businessHoursGroupBox)
-        self.businessHoursFormLayout.setObjectName(u"businessHoursFormLayout")
+        self.businessHoursGridLayout = QGridLayout(self.businessHoursGroupBox)
+        self.businessHoursGridLayout.setObjectName(u"businessHoursGridLayout")
         self.mondayLabel = QLabel(self.businessHoursGroupBox)
         self.mondayLabel.setObjectName(u"mondayLabel")
 
-        self.businessHoursFormLayout.setWidget(0, QFormLayout.LabelRole, self.mondayLabel)
+        self.businessHoursGridLayout.addWidget(self.mondayLabel, 0, 0, 1, 1)
 
-        self.mondayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.mondayLineEdit.setObjectName(u"mondayLineEdit")
+        self.mondayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.mondayStartTimeEdit.setObjectName(u"mondayStartTimeEdit")
+        self.mondayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(0, QFormLayout.FieldRole, self.mondayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.mondayStartTimeEdit, 0, 1, 1, 1)
+
+        self.mondayToLabel = QLabel(self.businessHoursGroupBox)
+        self.mondayToLabel.setObjectName(u"mondayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.mondayToLabel, 0, 2, 1, 1)
+
+        self.mondayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.mondayEndTimeEdit.setObjectName(u"mondayEndTimeEdit")
+        self.mondayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.mondayEndTimeEdit, 0, 3, 1, 1)
+
+        self.mondayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.mondayClosedCheckBox.setObjectName(u"mondayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.mondayClosedCheckBox, 0, 4, 1, 1)
 
         self.tuesdayLabel = QLabel(self.businessHoursGroupBox)
         self.tuesdayLabel.setObjectName(u"tuesdayLabel")
 
-        self.businessHoursFormLayout.setWidget(1, QFormLayout.LabelRole, self.tuesdayLabel)
+        self.businessHoursGridLayout.addWidget(self.tuesdayLabel, 1, 0, 1, 1)
 
-        self.tuesdayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.tuesdayLineEdit.setObjectName(u"tuesdayLineEdit")
+        self.tuesdayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.tuesdayStartTimeEdit.setObjectName(u"tuesdayStartTimeEdit")
+        self.tuesdayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(1, QFormLayout.FieldRole, self.tuesdayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.tuesdayStartTimeEdit, 1, 1, 1, 1)
+
+        self.tuesdayToLabel = QLabel(self.businessHoursGroupBox)
+        self.tuesdayToLabel.setObjectName(u"tuesdayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.tuesdayToLabel, 1, 2, 1, 1)
+
+        self.tuesdayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.tuesdayEndTimeEdit.setObjectName(u"tuesdayEndTimeEdit")
+        self.tuesdayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.tuesdayEndTimeEdit, 1, 3, 1, 1)
+
+        self.tuesdayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.tuesdayClosedCheckBox.setObjectName(u"tuesdayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.tuesdayClosedCheckBox, 1, 4, 1, 1)
 
         self.wednesdayLabel = QLabel(self.businessHoursGroupBox)
         self.wednesdayLabel.setObjectName(u"wednesdayLabel")
 
-        self.businessHoursFormLayout.setWidget(2, QFormLayout.LabelRole, self.wednesdayLabel)
+        self.businessHoursGridLayout.addWidget(self.wednesdayLabel, 2, 0, 1, 1)
 
-        self.wednesdayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.wednesdayLineEdit.setObjectName(u"wednesdayLineEdit")
+        self.wednesdayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.wednesdayStartTimeEdit.setObjectName(u"wednesdayStartTimeEdit")
+        self.wednesdayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(2, QFormLayout.FieldRole, self.wednesdayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.wednesdayStartTimeEdit, 2, 1, 1, 1)
+
+        self.wednesdayToLabel = QLabel(self.businessHoursGroupBox)
+        self.wednesdayToLabel.setObjectName(u"wednesdayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.wednesdayToLabel, 2, 2, 1, 1)
+
+        self.wednesdayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.wednesdayEndTimeEdit.setObjectName(u"wednesdayEndTimeEdit")
+        self.wednesdayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.wednesdayEndTimeEdit, 2, 3, 1, 1)
+
+        self.wednesdayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.wednesdayClosedCheckBox.setObjectName(u"wednesdayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.wednesdayClosedCheckBox, 2, 4, 1, 1)
 
         self.thursdayLabel = QLabel(self.businessHoursGroupBox)
         self.thursdayLabel.setObjectName(u"thursdayLabel")
 
-        self.businessHoursFormLayout.setWidget(3, QFormLayout.LabelRole, self.thursdayLabel)
+        self.businessHoursGridLayout.addWidget(self.thursdayLabel, 3, 0, 1, 1)
 
-        self.thursdayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.thursdayLineEdit.setObjectName(u"thursdayLineEdit")
+        self.thursdayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.thursdayStartTimeEdit.setObjectName(u"thursdayStartTimeEdit")
+        self.thursdayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(3, QFormLayout.FieldRole, self.thursdayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.thursdayStartTimeEdit, 3, 1, 1, 1)
+
+        self.thursdayToLabel = QLabel(self.businessHoursGroupBox)
+        self.thursdayToLabel.setObjectName(u"thursdayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.thursdayToLabel, 3, 2, 1, 1)
+
+        self.thursdayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.thursdayEndTimeEdit.setObjectName(u"thursdayEndTimeEdit")
+        self.thursdayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.thursdayEndTimeEdit, 3, 3, 1, 1)
+
+        self.thursdayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.thursdayClosedCheckBox.setObjectName(u"thursdayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.thursdayClosedCheckBox, 3, 4, 1, 1)
 
         self.fridayLabel = QLabel(self.businessHoursGroupBox)
         self.fridayLabel.setObjectName(u"fridayLabel")
 
-        self.businessHoursFormLayout.setWidget(4, QFormLayout.LabelRole, self.fridayLabel)
+        self.businessHoursGridLayout.addWidget(self.fridayLabel, 4, 0, 1, 1)
 
-        self.fridayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.fridayLineEdit.setObjectName(u"fridayLineEdit")
+        self.fridayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.fridayStartTimeEdit.setObjectName(u"fridayStartTimeEdit")
+        self.fridayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(4, QFormLayout.FieldRole, self.fridayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.fridayStartTimeEdit, 4, 1, 1, 1)
+
+        self.fridayToLabel = QLabel(self.businessHoursGroupBox)
+        self.fridayToLabel.setObjectName(u"fridayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.fridayToLabel, 4, 2, 1, 1)
+
+        self.fridayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.fridayEndTimeEdit.setObjectName(u"fridayEndTimeEdit")
+        self.fridayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.fridayEndTimeEdit, 4, 3, 1, 1)
+
+        self.fridayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.fridayClosedCheckBox.setObjectName(u"fridayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.fridayClosedCheckBox, 4, 4, 1, 1)
 
         self.saturdayLabel = QLabel(self.businessHoursGroupBox)
         self.saturdayLabel.setObjectName(u"saturdayLabel")
 
-        self.businessHoursFormLayout.setWidget(5, QFormLayout.LabelRole, self.saturdayLabel)
+        self.businessHoursGridLayout.addWidget(self.saturdayLabel, 5, 0, 1, 1)
 
-        self.saturdayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.saturdayLineEdit.setObjectName(u"saturdayLineEdit")
+        self.saturdayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.saturdayStartTimeEdit.setObjectName(u"saturdayStartTimeEdit")
+        self.saturdayStartTimeEdit.setTime(QTime(10, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(5, QFormLayout.FieldRole, self.saturdayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.saturdayStartTimeEdit, 5, 1, 1, 1)
+
+        self.saturdayToLabel = QLabel(self.businessHoursGroupBox)
+        self.saturdayToLabel.setObjectName(u"saturdayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.saturdayToLabel, 5, 2, 1, 1)
+
+        self.saturdayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.saturdayEndTimeEdit.setObjectName(u"saturdayEndTimeEdit")
+        self.saturdayEndTimeEdit.setTime(QTime(16, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.saturdayEndTimeEdit, 5, 3, 1, 1)
+
+        self.saturdayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.saturdayClosedCheckBox.setObjectName(u"saturdayClosedCheckBox")
+
+        self.businessHoursGridLayout.addWidget(self.saturdayClosedCheckBox, 5, 4, 1, 1)
 
         self.sundayLabel = QLabel(self.businessHoursGroupBox)
         self.sundayLabel.setObjectName(u"sundayLabel")
 
-        self.businessHoursFormLayout.setWidget(6, QFormLayout.LabelRole, self.sundayLabel)
+        self.businessHoursGridLayout.addWidget(self.sundayLabel, 6, 0, 1, 1)
 
-        self.sundayLineEdit = QLineEdit(self.businessHoursGroupBox)
-        self.sundayLineEdit.setObjectName(u"sundayLineEdit")
+        self.sundayStartTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.sundayStartTimeEdit.setObjectName(u"sundayStartTimeEdit")
+        self.sundayStartTimeEdit.setTime(QTime(9, 0, 0))
 
-        self.businessHoursFormLayout.setWidget(6, QFormLayout.FieldRole, self.sundayLineEdit)
+        self.businessHoursGridLayout.addWidget(self.sundayStartTimeEdit, 6, 1, 1, 1)
+
+        self.sundayToLabel = QLabel(self.businessHoursGroupBox)
+        self.sundayToLabel.setObjectName(u"sundayToLabel")
+
+        self.businessHoursGridLayout.addWidget(self.sundayToLabel, 6, 2, 1, 1)
+
+        self.sundayEndTimeEdit = QTimeEdit(self.businessHoursGroupBox)
+        self.sundayEndTimeEdit.setObjectName(u"sundayEndTimeEdit")
+        self.sundayEndTimeEdit.setTime(QTime(18, 0, 0))
+
+        self.businessHoursGridLayout.addWidget(self.sundayEndTimeEdit, 6, 3, 1, 1)
+
+        self.sundayClosedCheckBox = QCheckBox(self.businessHoursGroupBox)
+        self.sundayClosedCheckBox.setObjectName(u"sundayClosedCheckBox")
+        self.sundayClosedCheckBox.setChecked(True)
+
+        self.businessHoursGridLayout.addWidget(self.sundayClosedCheckBox, 6, 4, 1, 1)
 
 
         self.verticalLayout_2.addWidget(self.businessHoursGroupBox)
@@ -288,19 +409,40 @@ class Ui_ConfigPage(object):
         self.storeNameLineEdit.setText(QCoreApplication.translate("ConfigPage", u"\uc2dc\uc2a4\ud14c\ubbf9 \ubcf8\uc810", None))
         self.businessHoursGroupBox.setTitle(QCoreApplication.translate("ConfigPage", u"\uc601\uc5c5 \uc2dc\uac04", None))
         self.mondayLabel.setText(QCoreApplication.translate("ConfigPage", u"\uc6d4\uc694\uc77c:", None))
-        self.mondayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"09:00-18:00", None))
+        self.mondayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.mondayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.mondayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.mondayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.tuesdayLabel.setText(QCoreApplication.translate("ConfigPage", u"\ud654\uc694\uc77c:", None))
-        self.tuesdayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"09:00-18:00", None))
+        self.tuesdayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.tuesdayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.tuesdayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.tuesdayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.wednesdayLabel.setText(QCoreApplication.translate("ConfigPage", u"\uc218\uc694\uc77c:", None))
-        self.wednesdayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"09:00-18:00", None))
+        self.wednesdayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.wednesdayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.wednesdayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.wednesdayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.thursdayLabel.setText(QCoreApplication.translate("ConfigPage", u"\ubaa9\uc694\uc77c:", None))
-        self.thursdayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"09:00-18:00", None))
+        self.thursdayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.thursdayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.thursdayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.thursdayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.fridayLabel.setText(QCoreApplication.translate("ConfigPage", u"\uae08\uc694\uc77c:", None))
-        self.fridayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"09:00-18:00", None))
+        self.fridayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.fridayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.fridayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.fridayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.saturdayLabel.setText(QCoreApplication.translate("ConfigPage", u"\ud1a0\uc694\uc77c:", None))
-        self.saturdayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"10:00-16:00", None))
+        self.saturdayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.saturdayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.saturdayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.saturdayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.sundayLabel.setText(QCoreApplication.translate("ConfigPage", u"\uc77c\uc694\uc77c:", None))
-        self.sundayLineEdit.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
+        self.sundayStartTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.sundayToLabel.setText(QCoreApplication.translate("ConfigPage", u" ~ ", None))
+        self.sundayEndTimeEdit.setDisplayFormat(QCoreApplication.translate("ConfigPage", u"HH:mm", None))
+        self.sundayClosedCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud734\ubb34", None))
         self.programSettingsGroupBox.setTitle(QCoreApplication.translate("ConfigPage", u"\ud504\ub85c\uadf8\ub7a8 \uc124\uc815", None))
         self.scheduleFunctionLabel.setText(QCoreApplication.translate("ConfigPage", u"\uc2a4\ucf00\uc904 \uae30\ub2a5:", None))
         self.scheduleFunctionCheckBox.setText(QCoreApplication.translate("ConfigPage", u"\ud65c\uc131\ud654", None))

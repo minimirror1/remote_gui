@@ -10,13 +10,13 @@
       "wednesday": "09:00-18:00",
       "thursday": "09:00-18:00",
       "friday": "09:00-18:00",
-      "saturday": "10:00-16:00",
+      "saturday": "12:00-16:00",
       "sunday": "휴무"
     }
   },
   "program_settings": {
     "schedule_function": true,
-    "sync_time_ms": 1500.0
+    "sync_time_ms": 200.0
   },
-  "enable_log_file": true
-} 
+  "enable_log_file": false
+}
