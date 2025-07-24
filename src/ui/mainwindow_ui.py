@@ -101,6 +101,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_8.addWidget(self.SettingButton)
 
+        self.ConfigButton = QPushButton(self.verticalFrame_2)
+        self.ConfigButton.setObjectName(u"ConfigButton")
+
+        self.verticalLayout_8.addWidget(self.ConfigButton)
+
         self.HelpButton = QPushButton(self.verticalFrame_2)
         self.HelpButton.setObjectName(u"HelpButton")
 
@@ -232,6 +237,7 @@ class Ui_MainWindow(object):
         self.PlayButton.setText(QCoreApplication.translate("MainWindow", u"Play", None))
         self.jogButton.setText(QCoreApplication.translate("MainWindow", u"Jog", None))
         self.SettingButton.setText(QCoreApplication.translate("MainWindow", u"Setting", None))
+        self.ConfigButton.setText(QCoreApplication.translate("MainWindow", u"Config", None))
         self.HelpButton.setText(QCoreApplication.translate("MainWindow", u"Help", None))
         self.labelTx.setText(QCoreApplication.translate("MainWindow", u"T", None))
         self.labelRx.setText(QCoreApplication.translate("MainWindow", u"R", None))

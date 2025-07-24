@@ -8,6 +8,7 @@ from src.home_page import HomePage  # HomePage UI 클래스 import 추가
 from src.monitor_page import MonitorPage  # MonitorPage UI 클래스 import 추가
 from src.jog_page import JogPage  # JogPage UI 클래스 import 추가
 from src.setting_page import SettingPage  # SettingPage UI 클래스 import 추가
+from src.config_page import ConfigPage  # ConfigPage UI 클래스 import 추가
 from src.help_page import HelpPage  # HelpPage UI 클래스 import 추가
 
 import _icons_rc  # 수정된 import 경로
@@ -147,6 +148,10 @@ class MainWindow(QMainWindow):
         self.setting_page = SettingPage()
         self.ui.mainPage.addWidget(self.setting_page)
         
+        # ConfigPage UI 초기화
+        self.config_page = ConfigPage()
+        self.ui.mainPage.addWidget(self.config_page)
+        
         # HelpPage UI 초기화
         self.help_page = HelpPage()
         self.ui.mainPage.addWidget(self.help_page)
@@ -171,7 +176,8 @@ class MainWindow(QMainWindow):
         self.ui.PlayButton.clicked.connect(lambda: self.change_page(0))  # PlayPage
         self.ui.jogButton.clicked.connect(lambda: self.change_page(2))   # JogPage
         self.ui.SettingButton.clicked.connect(lambda: self.change_page(3))  # SettingPage
-        self.ui.HelpButton.clicked.connect(lambda: self.change_page(4))  # HelpPage
+        self.ui.ConfigButton.clicked.connect(lambda: self.change_page(4))  # ConfigPage
+        self.ui.HelpButton.clicked.connect(lambda: self.change_page(5))  # HelpPage
 
         # 마우스 이벤트 추적을 위해 위젯들의 mouseTracking 활성화
         self.ui.centralwidget.setAttribute(Qt.WA_TransparentForMouseEvents, False)

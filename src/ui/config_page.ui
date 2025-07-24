@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConfigPage</class>
+ <widget class="QWidget" name="ConfigPage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Configuration</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>782</width>
+        <height>800</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QGroupBox" name="basicInfoGroupBox">
+         <property name="title">
+          <string>기본 정보</string>
+         </property>
+         <property name="font">
+          <font>
+           <family>나눔고딕</family>
+           <pointsize>12</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <layout class="QFormLayout" name="basicInfoFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="countryLabel">
+            <property name="text">
+             <string>국가:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="countryLineEdit">
+            <property name="text">
+             <string>대한민국</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="regionLabel">
+            <property name="text">
+             <string>지역:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="regionLineEdit">
+            <property name="text">
+             <string>서울특별시</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="storeNameLabel">
+            <property name="text">
+             <string>매장명:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="storeNameLineEdit">
+            <property name="text">
+             <string>시스테믹 본점</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="businessHoursGroupBox">
+         <property name="title">
+          <string>영업 시간</string>
+         </property>
+         <property name="font">
+          <font>
+           <family>나눔고딕</family>
+           <pointsize>12</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <layout class="QFormLayout" name="businessHoursFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="mondayLabel">
+            <property name="text">
+             <string>월요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="mondayLineEdit">
+            <property name="text">
+             <string>09:00-18:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="tuesdayLabel">
+            <property name="text">
+             <string>화요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="tuesdayLineEdit">
+            <property name="text">
+             <string>09:00-18:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="wednesdayLabel">
+            <property name="text">
+             <string>수요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="wednesdayLineEdit">
+            <property name="text">
+             <string>09:00-18:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="thursdayLabel">
+            <property name="text">
+             <string>목요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="thursdayLineEdit">
+            <property name="text">
+             <string>09:00-18:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="fridayLabel">
+            <property name="text">
+             <string>금요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="fridayLineEdit">
+            <property name="text">
+             <string>09:00-18:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="saturdayLabel">
+            <property name="text">
+             <string>토요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLineEdit" name="saturdayLineEdit">
+            <property name="text">
+             <string>10:00-16:00</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="sundayLabel">
+            <property name="text">
+             <string>일요일:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLineEdit" name="sundayLineEdit">
+            <property name="text">
+             <string>휴무</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="programSettingsGroupBox">
+         <property name="title">
+          <string>프로그램 설정</string>
+         </property>
+         <property name="font">
+          <font>
+           <family>나눔고딕</family>
+           <pointsize>12</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <layout class="QFormLayout" name="programSettingsFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="scheduleFunctionLabel">
+            <property name="text">
+             <string>스케줄 기능:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QCheckBox" name="scheduleFunctionCheckBox">
+            <property name="text">
+             <string>활성화</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="syncTimeLabel">
+            <property name="text">
+             <string>동기화 시간 (ms):</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QDoubleSpinBox" name="syncTimeDoubleSpinBox">
+            <property name="minimum">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>10000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>100.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1500.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="logSettingsGroupBox">
+         <property name="title">
+          <string>로그 설정</string>
+         </property>
+         <property name="font">
+          <font>
+           <family>나눔고딕</family>
+           <pointsize>12</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <layout class="QFormLayout" name="logSettingsFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="enableLogFileLabel">
+            <property name="text">
+             <string>로그 파일 생성:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QCheckBox" name="enableLogFileCheckBox">
+            <property name="text">
+             <string>활성화</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="configVersionGroupBox">
+         <property name="title">
+          <string>설정 버전</string>
+         </property>
+         <property name="font">
+          <font>
+           <family>나눔고딕</family>
+           <pointsize>12</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <layout class="QFormLayout" name="configVersionFormLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="configVersionLabel">
+            <property name="text">
+             <string>설정 버전:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="configVersionLineEdit">
+            <property name="text">
+             <string>1.0.0</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="buttonFrame">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="buttonLayout">
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="loadButton">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>불러오기</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources/icons/_icons.qrc">
+          <normaloff>:/feather/icons/feather/folder-open.png</normaloff>:/feather/icons/feather/folder-open.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="saveButton">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>저장</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources/icons/_icons.qrc">
+          <normaloff>:/feather/icons/feather/save.png</normaloff>:/feather/icons/feather/save.png</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resetButton">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>초기화</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../resources/icons/_icons.qrc">
+          <normaloff>:/feather/icons/feather/refresh-cw.png</normaloff>:/feather/icons/feather/refresh-cw.png</iconset>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../resources/icons/_icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -144,6 +144,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="ConfigButton">
+            <property name="text">
+             <string>Config</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="HelpButton">
             <property name="text">
              <string>Help</string>
