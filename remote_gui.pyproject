@@ -1,6 +1,40 @@
 {
     "files": [
-        "widget.py",
-        "form.ui"
+        "main.py",
+
+        "src/config.py",
+        "src/mainwindow.py",
+        "src/home_page.py",
+        "src/jog_page.py",
+        "src/monitor_page.py",
+        "src/config_page.py",
+        "src/setting_page.py",
+        "src/help_page.py",
+        "src/serial_manager.py",
+        "src/device_status_manager.py",
+
+        "src/api/api_client.py",
+        "src/api/api_manager.py",
+        "src/api/examples.py",
+        "src/api/robot_monitor_client.py",
+        "src/api/sse_client.py",
+        "src/api/sse_manager.py",
+        "src/api/models/response_model.py",
+
+        "src/ui/mainwindow.ui",
+        "src/ui/home_page.ui",
+        "src/ui/jog_page.ui",
+        "src/ui/monitor_page.ui",
+        "src/ui/config_page.ui",
+        "src/ui/setting_page.ui",
+        "src/ui/help_page.ui",
+        "src/ui/net_test.ui",
+
+        "src/resources/qrc_resources.qrc",
+
+        "tests/widget.py",
+        "tests/form.ui",
+        "tests/form_ui.py",
+        "tests/ui_form.py"
     ]
 }
